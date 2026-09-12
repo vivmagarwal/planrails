@@ -1,0 +1,83 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/nonexistent-machine/src/hooks/plan-session-start.mjs\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"/nonexistent-machine/src/hooks/guard-never-delete.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/nonexistent-machine/src/hooks/guard-read.mjs\""
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash|Read|Agent|Skill|Workflow",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/nonexistent-machine/src/hooks/plan-pre-tool.mjs\""
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/nonexistent-machine/src/hooks/plan-subagent-start.mjs\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/nonexistent-machine/src/hooks/plan-stop.mjs\""
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/nonexistent-machine/src/hooks/precompact-journal.mjs\""
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/nonexistent-machine/src/hooks/postcompact-journal.mjs\""
+          }
+        ]
+      }
+    ]
+  }
+}

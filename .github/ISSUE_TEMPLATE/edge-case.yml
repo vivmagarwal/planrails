@@ -1,0 +1,36 @@
+name: Edge case
+description: A gate, a rule, a condition of done or a hook was wrong in a case nobody thought of.
+labels: ["edge-case"]
+body:
+  - type: textarea
+    id: the-case
+    attributes:
+      label: The case
+      description: What was true about the work, and what planrails said about it. Say what the instrument literally computed and what was actually true.
+    validations:
+      required: true
+  - type: dropdown
+    id: direction
+    attributes:
+      label: Which way was it wrong
+      options:
+        - a gate was RED but the work was right
+        - a gate was GREEN but the work was wrong
+        - a rule fired when it should not have (or did not fire when it should)
+        - a condition of done could not be answered honestly
+        - a hook injected the wrong thing, or nothing
+        - something else
+    validations:
+      required: true
+  - type: textarea
+    id: should
+    attributes:
+      label: What should have happened
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Filled in by `npx planrails issue edge`.
+      render: text

@@ -1,0 +1,24 @@
+name: Wish
+description: Something you wish planrails did, or did differently.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: wish
+    attributes:
+      label: What you wish for
+      description: One paragraph. What would you type, and what would happen?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: The situation that made you want it. A real example beats a general argument.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Filled in by `npx planrails issue wish`. Optional.
+      render: text
