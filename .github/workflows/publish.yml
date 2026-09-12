@@ -3,7 +3,14 @@
 # The job proves its identity to npm with a short-lived OpenID token that GitHub
 # mints for this workflow; npm accepts a publish from this one workflow of this
 # one repository, and provenance is attached automatically (public repo, public
-# package). Trigger: `npm version patch && git push --follow-tags`.
+# package).
+#
+# To release: bump the version and CHANGELOG, commit to main, then push the
+# release tag BY NAME:
+#   git tag vX.Y.Z && git push origin main && git push origin vX.Y.Z
+# Push the tag explicitly. `git push --follow-tags` silently skips a lightweight
+# tag, and can push a stale annotated tag instead — that once fired an old
+# version's publish by accident.
 #
 # One-time setup on npmjs.com, by the owner with 2FA (npm requires it done in the
 # browser; a token cannot): planrails → Settings → Trusted Publisher → GitHub
