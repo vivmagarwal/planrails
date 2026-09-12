@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3 — 2026-09-12
+
+- Releases are published by GitHub Actions through npm trusted publishing (OIDC) on a `v*` tag push: no npm token anywhere, no browser 2FA prompt per release, provenance attached automatically. `.github/workflows/publish.yml`; the one-time npmjs.com setup and the release steps are in CONTRIBUTING.md § Release. Why: npm's July 2026 changelog retires tokens that bypass 2FA (direct publishing with them ends around January 2027) and points to trusted publishing.
+- The release checks understand CI: on GitHub Actions the run must be on a tag that matches `package.json` (`v0.1.3` ↔ `0.1.3`); the laptop-only "pushed" and "detached" checks are skipped there. `test/release-check.test.mjs`.
+- `package-lock.json` is committed and both workflows install with `npm ci`, so a release build resolves exactly what was tested.
+- Nothing changes in the code a project installs.
+
 ## 0.1.2 — 2026-09-12
 
 - `npx planrails update` now also rewrites the plans block in CLAUDE.md from the plans on disk, so a marker or wording written by an older version is replaced on upgrade. `test/claude-md.test.mjs`.

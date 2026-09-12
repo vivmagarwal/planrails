@@ -44,30 +44,61 @@ a real project.
 
 ## 4. Release (maintainers)
 
+Releases are published by GitHub Actions through npm **trusted publishing**
+(OIDC). No npm token exists anywhere: the workflow proves its identity to npm
+with a short-lived OpenID token that GitHub mints for it, npm accepts a publish
+from that one workflow of this one repository, and provenance is attached
+automatically. This is the path npm itself points to. Since July 2026, tokens
+that bypass 2FA are being retired (direct publishing with them ends around
+January 2027), and every local `npm publish` needs a person to approve it in a
+browser. A tag push needs nobody.
+
+**One-time setup on npmjs.com, by a maintainer with 2FA** (npm requires this
+to be done interactively; a token cannot do it):
+**planrails → Settings → Trusted Publisher → GitHub Actions**
+
+| field | value |
+|---|---|
+| Organization or user | `vivmagarwal` |
+| Repository | `planrails` |
+| Workflow filename | `publish.yml` |
+| Environment name | leave empty |
+| Allowed actions | tick **`npm publish`** as well. Configurations made after 2026-09-03 default to `npm stage publish` only, which needs a person to approve every release. |
+
+Then, on the same page, **Publishing access → "Require two-factor
+authentication and disallow tokens"**. After that, only this workflow (OIDC)
+and a person with 2FA can publish. npm does not verify the configuration when
+you save it; a wrong field shows up as `ENEEDAUTH` on the first run, and the
+troubleshooting list is in npm's trusted-publishers guide.
+
+**Every release, from a clean and pushed `main`:**
+
 ```bash
-# 1. the CHANGELOG has a "## <new version> — <date>" entry, committed
-# 2. bump, commit and tag in one step; push the commit and the tag
-npm version patch            # or minor / major → commit "0.1.2" + tag v0.1.2
-git push --follow-tags
-# 3. wait for CI (six jobs: ubuntu and macos × Node 20, 22, 24), then publish
-npm publish
+# CHANGELOG.md has a "## <new version> — <date>" entry, committed and pushed
+npm version patch            # or minor / major → commit "planrails 0.1.3" + tag v0.1.3
+git push --follow-tags       # the tag starts .github/workflows/publish.yml
+gh run watch                 # or: gh run list --workflow publish.yml
+npm view planrails version   # the proof
 ```
 
-Two lifecycle scripts run around `npm publish` (`scripts/release-check.mjs`):
+The workflow installs with `npm ci`, runs the tests and the selftests, then
+`npm publish`. Around that, `scripts/release-check.mjs` runs as
+`prepublishOnly` and `postpublish`:
 
-- **before** (`prepublishOnly`) refuses, one plain sentence each, when the
-  version is already on the registry, the CHANGELOG has no entry for it, the
-  working tree is dirty, or HEAD is not pushed. npm's own escape hatch is
-  `npm publish --ignore-scripts`.
-- **after** (`postpublish`) waits until the registry serves the version, then
-  prints the next lines.
+- **before** refuses, one plain sentence each, when the tag does not match
+  `package.json`, the version is already on the registry, the CHANGELOG has no
+  entry for it, or the tree is dirty. On a laptop it also refuses an unpushed or
+  detached HEAD. npm's own escape hatch is `npm publish --ignore-scripts`.
+- **after** waits until the registry serves the version, then prints the next
+  lines, so the job ends only when `npm install` will work.
 
-**Why the wait exists — measured 2026-09-12 with npm 11.3.0.** A web-authenticated
-publish is *staged*: the registry answers the upload with `202 Accepted` and
-finalizes the version about a minute later. For 0.1.1 the upload was accepted at
-07:27:5x UTC and the version became visible at 07:29:05. Inside that window a
+**Why the wait exists — measured 2026-09-12 with npm 11.3.0.** A publish is
+*staged*: the registry answers the upload with `202 Accepted` and finalizes the
+version about a minute later (69 s and 75 s measured). Inside that window a
 second `npm publish` fails with `E409 Cannot publish over previously staged
 version`, and `npm install planrails@<version>` fails with `ETARGET No matching
-version found` — it did three times, the last one one second before the version
-appeared. So after `npm publish` returns, do not run it again; let `after` wait,
-or check with `npm view planrails version`.
+version found`. So never run `npm publish` twice; let `after` wait, or check
+with `npm view planrails version`.
+
+**Fallback, from a laptop:** `npm publish` still works, with the browser 2FA
+prompt; the same checks run.

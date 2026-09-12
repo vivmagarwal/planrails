@@ -22,6 +22,11 @@
  *           the command returns only when an install will work, then prints the
  *           next lines. Skipped on `npm publish --dry-run`.
  *
+ * In GitHub Actions (.github/workflows/publish.yml, trusted publishing) the checkout
+ * is a detached HEAD at the tag, so "pushed" and "detached" mean nothing there;
+ * instead `before` requires the run to be on a tag that matches package.json
+ * (tag v0.1.3 ↔ version 0.1.3), which is what makes the tag the release.
+ *
  * The checks are pure functions over injected readers, so test/release-check.test.mjs
  * exercises every refusal without git or a registry.
  */
@@ -32,18 +37,26 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** Reasons not to publish; empty means go. `gitStatus` is `git status --porcelain --branch` output. */
-export function reasonsNotToPublish({ name, version, changelog, gitStatus, registryVersionTime }) {
+/**
+ * Reasons not to publish; empty means go. `gitStatus` is `git status --porcelain --branch` output.
+ * `ci` is null on a laptop; in GitHub Actions it is { refType, refName } from GITHUB_REF_TYPE / GITHUB_REF_NAME.
+ */
+export function reasonsNotToPublish({ name, version, changelog, gitStatus, registryVersionTime, ci = null }) {
   const out = [];
   if (registryVersionTime) out.push(`${name}@${version} is already on the registry (published ${registryVersionTime}). Bump the version first: npm version patch`);
   if (!new RegExp(`^## ${version.replace(/\./g, "\\.")}\\b`, "m").test(changelog)) out.push(`CHANGELOG.md has no "## ${version}" entry. Write what changed before publishing it`);
   const lines = gitStatus.split("\n").filter(Boolean);
   const dirty = lines.filter((l) => !l.startsWith("##"));
   if (dirty.length) out.push(`the working tree has ${dirty.length} uncommitted change(s); a published tarball must match a commit. Commit or stash first`);
-  const head = lines.find((l) => l.startsWith("##")) || "";
-  const ahead = head.match(/\[(ahead \d+[^\]]*)\]/);
-  if (ahead) out.push(`HEAD is not pushed (${ahead[1]}). Push first, so the published bytes are public in git too`);
-  if (/no branch/.test(head)) out.push("HEAD is detached; publish from a branch that is pushed");
+  if (ci) {
+    if (ci.refType !== "tag") out.push(`a CI publish runs only on a tag push; this run is on ${ci.refType || "an unknown ref"} "${ci.refName}"`);
+    else if (ci.refName !== `v${version}`) out.push(`tag "${ci.refName}" does not match package.json version ${version}; the tag is the release, so they must agree (npm version makes both)`);
+  } else {
+    const head = lines.find((l) => l.startsWith("##")) || "";
+    const ahead = head.match(/\[(ahead \d+[^\]]*)\]/);
+    if (ahead) out.push(`HEAD is not pushed (${ahead[1]}). Push first, so the published bytes are public in git too`);
+    if (/no branch/.test(head)) out.push("HEAD is detached; publish from a branch that is pushed");
+  }
   return out;
 }
 
@@ -73,19 +86,20 @@ const npmViewTime = (name, version) => { const t = npmViewJson(`${name}@${versio
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const mode = process.argv[2];
   const { name, version } = pkg();
+  const ci = process.env.GITHUB_ACTIONS === "true" ? { refType: process.env.GITHUB_REF_TYPE || "", refName: process.env.GITHUB_REF_NAME || "" } : null;
   if (mode === "before") {
     const gitStatus = spawnSync("git", ["status", "--porcelain", "--branch"], { cwd: ROOT, encoding: "utf8" }).stdout || "";
-    const reasons = reasonsNotToPublish({ name, version, changelog: readFileSync(join(ROOT, "CHANGELOG.md"), "utf8"), gitStatus, registryVersionTime: npmViewTime(name, version) });
+    const reasons = reasonsNotToPublish({ name, version, changelog: readFileSync(join(ROOT, "CHANGELOG.md"), "utf8"), gitStatus, registryVersionTime: npmViewTime(name, version), ci });
     if (reasons.length) {
       process.stderr.write(`release-check: NOT publishing ${name}@${version}:\n${reasons.map((r) => `  - ${r}`).join("\n")}\n(npm's escape hatch, if you must: npm publish --ignore-scripts)\n`);
       process.exit(1);
     }
-    process.stdout.write(`release-check: ${name}@${version} — tree clean and pushed, CHANGELOG entry present, version not on the registry yet. Publishing.\n`);
+    process.stdout.write(`release-check: ${name}@${version} — ${ci ? `tag ${ci.refName} matches package.json` : "tree clean and pushed"}, CHANGELOG entry present, version not on the registry yet. Publishing.\n`);
   } else if (mode === "after") {
     if (process.env.npm_config_dry_run === "true") process.exit(0);
-    process.stdout.write(`release-check: waiting for the registry to serve ${name}@${version} (a web-authenticated publish is staged and finalizes in about a minute)`);
+    process.stdout.write(`release-check: waiting for the registry to serve ${name}@${version} (a publish is staged and finalizes in about a minute)`);
     waitUntilVisible({ name, version, view: npmView, sleep: (ms) => new Promise((r) => setTimeout(r, ms)), tick: () => process.stdout.write(".") })
-      .then((ms) => process.stdout.write(`\n${name}@${version} is on the registry (${Math.round(ms / 1000)} s). Next:\n  git push --follow-tags          # the tag npm version made\n  npm install ${name}@${version}     # in a project\n`))
+      .then((ms) => process.stdout.write(`\n${name}@${version} is on the registry (${Math.round(ms / 1000)} s). Next:\n${ci ? "" : "  git push --follow-tags          # the tag npm version made\n"}  npm install ${name}@${version}     # in a project\n`))
       .catch((e) => { process.stderr.write(`\n${e.message}\n`); process.exit(1); });
   } else {
     process.stderr.write("usage: node scripts/release-check.mjs before|after\n");

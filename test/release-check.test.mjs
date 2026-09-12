@@ -40,6 +40,16 @@ describe("release-check before", () => {
     assert.equal(r.length, 1);
     assert.match(r[0], /detached/);
   });
+  it("in CI accepts the detached checkout of the matching tag, and refuses a tag that does not match the version or a branch run", () => {
+    const inCi = { ...base, gitStatus: "## HEAD (no branch)\n" };
+    assert.deepEqual(reasonsNotToPublish({ ...inCi, ci: { refType: "tag", refName: "v0.1.2" } }), []);
+    let r = reasonsNotToPublish({ ...inCi, ci: { refType: "tag", refName: "v0.1.3" } });
+    assert.equal(r.length, 1);
+    assert.match(r[0], /tag "v0\.1\.3" does not match package\.json version 0\.1\.2/);
+    r = reasonsNotToPublish({ ...inCi, ci: { refType: "branch", refName: "main" } });
+    assert.equal(r.length, 1);
+    assert.match(r[0], /only on a tag push; this run is on branch "main"/);
+  });
 });
 
 describe("release-check after", () => {
