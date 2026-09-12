@@ -1,16 +1,19 @@
 {
   "name": "planrails",
   "version": "0.2.0",
-  "description": "Plans that survive a lost session, and \"done\" that means done. A planner prompt and a tiny checker. No install.",
+  "description": "Plans that survive a lost session, and \"done\" that means done. A planner prompt and a tiny checker.",
   "type": "module",
   "license": "MIT",
+  "bin": { "planrails": "bin/planrails.mjs" },
+  "files": ["bin/", "PLANNER.md", "tools/check-plans.mjs", "README.md", "LICENSE", "CHANGELOG.md"],
   "repository": { "type": "git", "url": "git+https://github.com/vivmagarwal/planrails.git" },
   "homepage": "https://github.com/vivmagarwal/planrails#readme",
   "bugs": { "url": "https://github.com/vivmagarwal/planrails/issues" },
   "keywords": ["planning", "claude-code", "agents", "llm", "compaction", "tracker"],
   "engines": { "node": ">=20" },
   "scripts": {
-    "test": "node --test tools/check-plans.test.mjs",
-    "check": "node tools/check-plans.mjs --root examples/weekly-digest && node --test tools/check-plans.test.mjs"
+    "test": "node --test tools/check-plans.test.mjs bin/planrails.test.mjs",
+    "check": "node bin/planrails.mjs check --dir examples/weekly-digest && npm test",
+    "prepublishOnly": "npm test"
   }
 }

@@ -26,6 +26,8 @@ No dependencies. Node 20+, any OS.
 - **`tools/check-plans.mjs` enforces one rule** — a done task needs a proof and
   pasted evidence. Keep it to that. Every behaviour has a case in
   `tools/check-plans.test.mjs`; add one for anything you change.
-- **Keep it installable-by-copy.** There is no package to publish and no CLI to
-  build. A user copies `PLANNER.md`, the templates, and the checker. Do not add a
-  build step, a config file, or a dependency.
+- **Keep it copy-simple.** The CLI (`bin/planrails.mjs`) only copies two files
+  into a project and runs the checker — no `package.json` edits, no `npm install`,
+  no hooks. Do not add a build step, a config file, or a runtime dependency.
+  `PLANNER.md` must stay self-contained: an agent that has only that file must be
+  able to do everything it says.

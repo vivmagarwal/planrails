@@ -6,12 +6,12 @@
  * single rule: a task marked done must name a proof and must carry evidence that
  * the proof was run. An empty evidence cell on a done task fails the build.
  *
- * Copy this file into a project (e.g. scripts/check-plans.mjs) and add
- *   node scripts/check-plans.mjs
- * to the check command. No dependencies. Runs on Node 20+ on any OS.
+ * `npx planrails init` copies this file into a project's .project-management/;
+ * add `node .project-management/check-plans.mjs` to the command you run before
+ * every commit. No dependencies. Runs on Node 20+ on any OS.
  *
  *   node check-plans.mjs            # structural: done tasks must have proof + evidence
- *   node check-plans.mjs --verify   # also re-runs each done task's proof, expects exit 0
+ *   node check-plans.mjs --verify   # also re-run each done task's proof, expect exit 0
  *   node check-plans.mjs --root DIR # check a project other than the current directory
  *
  * The functions are pure over their inputs, so check-plans.test.mjs exercises
@@ -23,52 +23,56 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const EMPTY = /^[\s\-—–·]*$/; // blank, or a dash/dot someone wrote for "nothing"
-const DONE = new Set(["done", "✅", "✔"]);
+const DONE = new Set(["done", "✅", "✔", "✔️"]);
 
 /** Split one markdown table row `| a | b |` into trimmed cells. */
 function cells(line) {
   return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
 }
 const isRow = (l) => l.trim().startsWith("|");
+const isHeading = (l) => /^#{1,6}\s/.test(l.trim());
 const isSeparator = (l) => /^\|[\s:|-]+\|?\s*$/.test(l.trim());
 
-/** Parse the task table under a `## Tasks` heading. Returns [] if there is none. */
+/**
+ * Parse the task table under a `## Tasks` heading.
+ * Returns { found, tasks }: found is true when a header row with the four named
+ * columns was located (even if it has no data rows — a new plan). tasks is the
+ * data rows. Columns are matched by name, so their order does not matter.
+ */
 export function parseTasks(text) {
-  const lines = text.split("\n");
+  const lines = text.split(/\r?\n/);
   const start = lines.findIndex((l) => /^#{1,6}\s+tasks\b/i.test(l.trim()));
-  if (start === -1) return [];
+  if (start === -1) return { found: false, tasks: [] };
   let i = start + 1;
-  while (i < lines.length && !isRow(lines[i]) && !/^#{1,6}\s/.test(lines[i])) i++;
-  if (i >= lines.length || !isRow(lines[i])) return [];
+  while (i < lines.length && !isRow(lines[i]) && !isHeading(lines[i])) i++;
+  if (i >= lines.length || !isRow(lines[i])) return { found: false, tasks: [] };
   const header = cells(lines[i]).map((h) => h.toLowerCase());
-  const col = (name) => header.indexOf(name);
-  const ci = { id: col("id"), status: col("status"), proof: col("proof"), evidence: col("evidence") };
-  if (ci.id === -1 || ci.status === -1 || ci.proof === -1 || ci.evidence === -1) return [];
+  const ci = { id: header.indexOf("id"), task: header.indexOf("task"), status: header.indexOf("status"), proof: header.indexOf("proof"), evidence: header.indexOf("evidence") };
+  if (ci.id === -1 || ci.status === -1 || ci.proof === -1 || ci.evidence === -1) return { found: false, tasks: [] };
   const tasks = [];
   for (i = i + 1; i < lines.length; i++) {
     const l = lines[i];
-    if (!isRow(l)) break; // table ends at the first non-row line
+    if (!isRow(l) || isHeading(l)) break; // the table ends at the first non-row line
     if (isSeparator(l)) continue;
     const c = cells(l);
-    const at = (idx) => (idx < c.length ? c[idx] : "");
-    tasks.push({ id: at(ci.id), task: at(header.indexOf("task")), status: at(ci.status).toLowerCase(), proof: at(ci.proof), evidence: at(ci.evidence), line: i + 1 });
+    const at = (idx) => (idx >= 0 && idx < c.length ? c[idx] : "");
+    tasks.push({ id: at(ci.id), task: at(ci.task), status: at(ci.status).toLowerCase(), proof: at(ci.proof), evidence: at(ci.evidence), line: i + 1 });
   }
-  return tasks;
+  return { found: true, tasks };
 }
 
 /** The command inside a proof cell (backticks stripped), or null for `owner`/empty. */
 export function proofCommand(proof) {
   const m = proof.match(/`([^`]+)`/);
   if (m) return m[1].trim();
-  if (/^owner$/i.test(proof.trim())) return null; // owner's word — no command to run
-  return null;
+  return null; // `owner`, prose, or empty — nothing to re-run
 }
 
 /** Problems with one plan's tasks. `run` (optional) executes a proof and returns its exit code. */
 export function checkPlan({ id, text, verify = false, run = null }) {
   const problems = [];
-  const tasks = parseTasks(text);
-  if (!tasks.length) { problems.push(`${id}: no readable Tasks table (needs a | id | task | status | proof | evidence | table under "## Tasks")`); return problems; }
+  const { found, tasks } = parseTasks(text);
+  if (!found) { problems.push(`${id}: no readable Tasks table (needs a | id | task | status | proof | evidence | table under a "## Tasks" heading)`); return problems; }
   for (const t of tasks) {
     if (!DONE.has(t.status)) continue;
     const proofEmpty = EMPTY.test(t.proof);
@@ -93,7 +97,7 @@ export function findPlans(root) {
   const out = [];
   for (const name of readdirSync(dir)) {
     const p = join(dir, name, "PLAN.md");
-    if (existsSync(p) && statSync(p).isFile()) out.push({ id: name, path: p });
+    try { if (statSync(p).isFile()) out.push({ id: name, path: p }); } catch { /* not a plan dir */ }
   }
   return out;
 }
@@ -102,7 +106,7 @@ export function findPlans(root) {
 export function checkPlans({ root = ".", verify = false } = {}) {
   const plans = findPlans(root);
   const problems = [];
-  const run = verify ? (cmd) => spawnSync(cmd, { cwd: root, shell: true, stdio: "ignore" }).status ?? 1 : null;
+  const run = verify ? (cmd) => { const r = spawnSync(cmd, { cwd: root, shell: true, stdio: "ignore" }); return r.status ?? 1; } : null;
   for (const { id, path } of plans) {
     let text = "";
     try { text = readFileSync(path, "utf8"); } catch (e) { problems.push(`${id}: cannot read ${path} (${e.code || e.message})`); continue; }
@@ -112,11 +116,17 @@ export function checkPlans({ root = ".", verify = false } = {}) {
 }
 
 // --- CLI ----------------------------------------------------------------------
+function flagValue(args, name) {
+  const eq = args.find((a) => a.startsWith(`${name}=`));
+  if (eq) return eq.slice(name.length + 1);
+  const i = args.indexOf(name);
+  return i !== -1 && args[i + 1] && !args[i + 1].startsWith("--") ? args[i + 1] : null;
+}
+
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const args = process.argv.slice(2);
   const verify = args.includes("--verify");
-  const rootFlag = args.indexOf("--root");
-  const root = rootFlag !== -1 ? args[rootFlag + 1] : ".";
+  const root = flagValue(args, "--root") || ".";
   const { plans, problems } = checkPlans({ root, verify });
   if (!plans.length) { process.stdout.write("check-plans: no plans under .project-management/plans/ — nothing to check\n"); process.exit(0); }
   if (problems.length) {

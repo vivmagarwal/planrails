@@ -5,9 +5,10 @@ description: Plan a feature with the user, then execute it, so the work survives
 
 # Plan
 
-Follow the planner method in **`PLANNER.md`** (in this skill's folder, or the
-planrails repo). Read it and do exactly what it says. Do not summarise it from
-memory — open it.
+Follow the planner method in **`PLANNER.md`**. Read it and do exactly what it
+says. Do not summarise it from memory — open it. Find it in this skill's folder,
+or at `.project-management/PLANNER.md` in a project set up with `npx planrails
+init`.
 
 The short version, so you know where you are going:
 

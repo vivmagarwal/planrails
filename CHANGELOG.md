@@ -2,37 +2,40 @@
 
 ## 0.2.0 — 2026-09-12
 
-Rebuilt as a planner prompt and one checker. No install, no CLI, no hooks.
-Backward compatibility with 0.1.x is intentionally dropped.
+Rebuilt as a planner prompt and one checker, with a two-command CLI that only
+copies files. Backward compatibility with 0.1.x is intentionally dropped.
 
-Why: 0.1.x was an npm package, and being an installed package is what made it
-fragile. It assumed npm and wrote a `package.json`, so it could not fit pnpm, bun,
+Why: 0.1.x was a heavy npm package, and its weight is what made it fragile. It
+wrote a `package.json` and ran `npm install`, so it could not fit pnpm, bun,
 non-Node or monorepo projects; it ran every gate through `bash -c`, so Windows
-could not work; it resolved the project root by a rule the CLI and the hooks could
-disagree on; and it carried ~2,500 lines and an 8,842-word guide to plan a
-feature. A review found ten data-loss and silent-failure paths in that surface.
-The planning idea never broke — the machinery around it did. So the machinery is
-gone.
+could not work; it resolved the project root by a rule the CLI and the installed
+hooks could disagree on; and it carried ~2,500 lines and an 8,842-word guide to
+plan a feature. A review found ten data-loss and silent-failure paths in that
+surface. The planning idea never broke — the machinery around it did.
 
-What replaces it, same three rails:
+What it is now, same three rails:
 
-- **`PLANNER.md`** — the prompt a model reads to plan with you and then execute.
-  The reload line, proof-before-work, and evidence-at-close are its whole method.
-- **`templates/PLAN.md` and `templates/LOG.md`** — the plan and its append-only
-  history.
-- **`tools/check-plans.mjs`** — ~120 lines, no dependencies, runs on any OS. It
-  enforces the one machine-checkable rule: a task marked done must name a proof
-  and carry pasted evidence. `--verify` re-runs each proof. `tools/check-plans.test.mjs`.
+- **`PLANNER.md`** — the prompt an agent reads to plan with you and then execute.
+  Self-contained: the reload line, proof-before-work, evidence-at-close, and the
+  plan and log templates are all in this one file.
+- **`tools/check-plans.mjs`** — ~130 lines, no dependencies, any OS (Windows in
+  CI). It enforces the one machine-checkable rule: a task marked done must name a
+  proof and carry pasted evidence. `--verify` re-runs each proof.
+  `tools/check-plans.test.mjs`.
+- **`bin/planrails.mjs`** — a safe CLI. `init` copies `PLANNER.md` and the checker
+  into a project's `.project-management/` and writes nothing else (no
+  `package.json`, no `npm install`, no hooks, no `CLAUDE.md` edits); `check` runs
+  the gate. `bin/planrails.test.mjs`.
 - **`skill/SKILL.md`** — copy to `~/.claude/skills/plan/` for `/plan`.
 - **`examples/weekly-digest/`** — a worked plan the checker validates in CI.
 
-Removed: the `bin/planrails.mjs` CLI, `src/plan/*` (the 843-line `plan.mjs`,
-`store`, `schema`, `paths`, …), `src/hooks/*` (SessionStart/PreToolUse/Stop/
-journal hooks, replaced by the reload line), `src/init.mjs`, `src/issue.mjs`, the
-`run` fresh-session runner, the release/trial/acceptance tooling, the shipped
-fixtures, and `.github/workflows/publish.yml`. The plan format changed from
-JSON (`state.json`, `gates.json`, `rules.json`) to one markdown table a person
-can read and fix.
+Removed: `src/plan/*` (the 843-line `plan.mjs`, `store`, `schema`, `paths`, …),
+`src/hooks/*` (SessionStart/PreToolUse/Stop/journal hooks, replaced by the reload
+line), the old `init` that wrote `package.json`, `src/issue.mjs`, the `run`
+fresh-session runner, the release/trial/acceptance tooling, and the shipped
+fixtures. The plan format changed from JSON (`state.json`, `gates.json`,
+`rules.json`) to one markdown table a person can read and fix. Publishing stays on
+GitHub Actions trusted publishing (`.github/workflows/publish.yml`).
 
 ## 0.1.3 — 2026-09-12
 

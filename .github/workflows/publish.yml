@@ -1,0 +1,32 @@
+# Publishes a tagged version to npm through trusted publishing (OIDC). No token.
+#
+# The job proves its identity to npm with a short-lived OpenID token that GitHub
+# mints for this workflow; npm accepts a publish from this one workflow of this
+# one repository, and provenance is attached automatically (public repo, public
+# package). Trigger: `npm version patch && git push --follow-tags`.
+#
+# One-time setup on npmjs.com, by the owner with 2FA (npm requires it done in the
+# browser; a token cannot): planrails → Settings → Trusted Publisher → GitHub
+# Actions, with Repository `vivmagarwal/planrails`, Workflow `publish.yml`,
+# Environment empty, and Allowed actions ticked to include `npm publish`. Until
+# that is saved, the publish step fails with ENEEDAUTH; nothing else is affected.
+name: publish
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: read
+  id-token: write # the OIDC token npm exchanges for a short-lived publish credential
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+      - run: npm install -g npm@11 # trusted publishing needs npm 11.5.1 or later
+      - run: node --test tools/check-plans.test.mjs bin/planrails.test.mjs
+      - run: npm publish
