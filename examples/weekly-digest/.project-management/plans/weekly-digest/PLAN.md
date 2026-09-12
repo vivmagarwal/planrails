@@ -41,6 +41,9 @@ Monday-morning job path.
 |------|----------|-----|
 | 2026-09-12 | five posts, not ten | ten made the email long in the mock; five fits one screen and covers the week's real traffic |
 
+## Learnings
+- ordering by `reads` alone shuffled the five posts between runs when two had the same count → order by `reads DESC, created_at DESC`, and the test asserts the exact order (flaky T1 test until the tiebreak was added)
+
 ## Context (read during planning — do not re-read)
 - lib/email/index.ts — the send seam; `sendEmail({to, subject, body})`, logs to the comms ledger
 - lib/jobs/README.md — how a scheduled job is registered and how it claims its run

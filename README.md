@@ -28,15 +28,16 @@ From the root of your project:
 npx planrails init
 ```
 
-That copies two files into `.project-management/` and makes the `plans/` folder.
-It writes **nothing else** — no `package.json`, no `npm install`, no hooks, no
-edits to your `CLAUDE.md`. Run it again any time; it skips files that already
-exist. What lands:
+That copies two files into `.project-management/planrails/` and makes the
+`plans/` folder. It writes **nothing else** — no `package.json`, no `npm install`,
+no hooks, no edits to your `CLAUDE.md`. Run it again any time; it skips files that
+already exist. What lands:
 
 ```
 .project-management/
-  PLANNER.md          the prompt your agent follows to plan and execute
-  check-plans.mjs     the checker (the one machine-enforced rail)
+  planrails/
+    PLANNER.md        the prompt your agent follows to plan and execute
+    check-plans.mjs   the checker (the one machine-enforced rail)
   plans/              your plans will live here, one folder each
 ```
 
@@ -44,8 +45,8 @@ Then, two steps:
 
 1. **Tell your agent to plan with you.** In any coding agent:
 
-   > Follow `.project-management/PLANNER.md` and tell me when you are ready to
-   > plan the next feature with me.
+   > Follow `.project-management/planrails/PLANNER.md` and tell me when you are
+   > ready to plan the next feature with me.
 
    It reads your repo, reports what it found in eight lines, and waits. Then you
    plan together, and it writes the plan and wires the reload line.
@@ -54,7 +55,7 @@ Then, two steps:
    every commit (your `check` / `lint` / CI script):
 
    ```bash
-   node .project-management/check-plans.mjs
+   node .project-management/planrails/check-plans.mjs
    ```
 
    Now the build fails if any task is marked done without pasted evidence.
@@ -76,9 +77,9 @@ The command is the same; the difference is what your agent sees.
 ### Without npm, or a non-Node project
 
 No npm? Copy the two files by hand from this repo:
-[`PLANNER.md`](PLANNER.md) → `.project-management/PLANNER.md`, and
+[`PLANNER.md`](PLANNER.md) → `.project-management/planrails/PLANNER.md`, and
 [`tools/check-plans.mjs`](tools/check-plans.mjs) →
-`.project-management/check-plans.mjs`. Make a `.project-management/plans/`
+`.project-management/planrails/check-plans.mjs`. Make a `.project-management/plans/`
 folder. Done.
 
 The checker needs Node to run. If your project has no Node at all, skip it — the
@@ -93,7 +94,11 @@ beside it in the same folder. Then `/plan` starts the same flow in any project.
 ## How a plan works
 
 Each plan is two files: `PLAN.md` (the map and tracker) and `LOG.md` (append-only
-history). The top of `PLAN.md` is what a fresh session reads first:
+history). `PLAN.md` also carries the plan's memory — the rules to keep, the
+decisions made, and the **learnings** (a mistake, written as the rule that avoids
+it). Because the reload line brings `PLAN.md` back at the start of every session, a
+lesson from one chat is read by the next one before it repeats the struggle. The
+top of `PLAN.md` is what a fresh session reads first:
 
 ```
 ## NOW
@@ -115,9 +120,9 @@ is in [`examples/weekly-digest/`](examples/weekly-digest).
 ## The checker
 
 ```bash
-node .project-management/check-plans.mjs            # done tasks must name a proof and carry evidence
-node .project-management/check-plans.mjs --verify   # also re-run each done task's proof, expect exit 0
-npx planrails check                                 # the same, using the latest published checker
+node .project-management/planrails/check-plans.mjs          # done tasks must name a proof and carry evidence
+node .project-management/planrails/check-plans.mjs --verify # also re-run each done task's proof, expect exit 0
+npx planrails check                                         # the same, using the latest published checker
 ```
 
 No dependencies. Node 20+, any OS (Windows included). The default is a fast
@@ -147,6 +152,8 @@ review found ten data-loss and silent-failure paths in that surface, and the
 "works with any project" promise broke on pnpm, bun, non-Node projects,
 monorepos and Windows. 0.2.0 keeps the idea and drops the weight: the same three
 rails, as a prompt plus one checker, with a two-command CLI that only copies
-files. See [`CHANGELOG.md`](CHANGELOG.md).
+files. 0.3.0 makes learnings a reloaded part of every plan and groups the two
+installed files under `.project-management/planrails/`. See
+[`CHANGELOG.md`](CHANGELOG.md).
 
 MIT.

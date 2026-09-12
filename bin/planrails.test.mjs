@@ -15,12 +15,13 @@ before(() => { dir = mkdtempSync(join(tmpdir(), "planrails-cli-")); });
 after(() => { rmSync(dir, { recursive: true, force: true }); });
 
 describe("planrails init", () => {
-  it("copies PLANNER.md and the checker into .project-management/ and makes plans/", () => {
+  it("copies PLANNER.md and the checker into .project-management/planrails/ and makes plans/", () => {
     const r = run(["init", "--dir", dir]);
     assert.equal(r.status, 0, r.stderr);
-    assert.ok(existsSync(join(dir, ".project-management", "PLANNER.md")), "PLANNER.md");
-    assert.ok(existsSync(join(dir, ".project-management", "check-plans.mjs")), "check-plans.mjs");
+    assert.ok(existsSync(join(dir, ".project-management", "planrails", "PLANNER.md")), "PLANNER.md");
+    assert.ok(existsSync(join(dir, ".project-management", "planrails", "check-plans.mjs")), "check-plans.mjs");
     assert.ok(existsSync(join(dir, ".project-management", "plans", ".gitkeep")), "plans/.gitkeep");
+    assert.equal(existsSync(join(dir, ".project-management", "PLANNER.md")), false, "system files live under planrails/, not loose at the root");
   });
   it("writes NO package.json and does NOT touch CLAUDE.md", () => {
     // dir was set up by the previous test; init must not have created these
@@ -29,7 +30,7 @@ describe("planrails init", () => {
   });
   it("is idempotent: a second run keeps the existing files and reports them", () => {
     const marker = "-- edited by the user --";
-    const planner = join(dir, ".project-management", "PLANNER.md");
+    const planner = join(dir, ".project-management", "planrails", "PLANNER.md");
     writeFileSync(planner, marker);
     const r = run(["init", "--dir", dir]);
     assert.equal(r.status, 0, r.stderr);
@@ -37,7 +38,7 @@ describe("planrails init", () => {
     assert.match(r.stdout, /already present/);
   });
   it("--force overwrites", () => {
-    const planner = join(dir, ".project-management", "PLANNER.md");
+    const planner = join(dir, ".project-management", "planrails", "PLANNER.md");
     writeFileSync(planner, "stale");
     const r = run(["init", "--dir", dir, "--force"]);
     assert.equal(r.status, 0, r.stderr);

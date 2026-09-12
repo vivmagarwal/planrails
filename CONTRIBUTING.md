@@ -20,14 +20,17 @@ No dependencies. Node 20+, any OS.
 ## Change something
 
 - **`PLANNER.md` is the product.** It is read by a model that will not see this
-  file. Keep it plain: short sentences, active voice, a worked example, and no
-  more rules than the three it already has. If a change makes a plan easier to
-  fake done, it will not be merged.
+  file. Keep it plain: short sentences, active voice, a worked example, and no new
+  rail beyond the three it already has (reload, proof, evidence). The Rules,
+  Decisions and Learnings sections of a plan are plain prose, not new machinery —
+  add to them freely. If a change makes a plan easier to fake done, it will not be
+  merged.
 - **`tools/check-plans.mjs` enforces one rule** — a done task needs a proof and
   pasted evidence. Keep it to that. Every behaviour has a case in
   `tools/check-plans.test.mjs`; add one for anything you change.
 - **Keep it copy-simple.** The CLI (`bin/planrails.mjs`) only copies two files
-  into a project and runs the checker — no `package.json` edits, no `npm install`,
-  no hooks. Do not add a build step, a config file, or a runtime dependency.
+  into a project's `.project-management/planrails/` and runs the checker — no
+  `package.json` edits, no `npm install`, no hooks. Do not add a build step, a
+  config file, or a runtime dependency.
   `PLANNER.md` must stay self-contained: an agent that has only that file must be
   able to do everything it says.

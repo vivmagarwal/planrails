@@ -7,8 +7,8 @@ description: Plan a feature with the user, then execute it, so the work survives
 
 Follow the planner method in **`PLANNER.md`**. Read it and do exactly what it
 says. Do not summarise it from memory — open it. Find it in this skill's folder,
-or at `.project-management/PLANNER.md` in a project set up with `npx planrails
-init`.
+or at `.project-management/planrails/PLANNER.md` in a project set up with `npx
+planrails init`.
 
 The short version, so you know where you are going:
 
@@ -23,7 +23,9 @@ The short version, so you know where you are going:
    reloads after every compaction. If the project runs Node, copy in
    `tools/check-plans.mjs` and wire it into the check command.
 4. **Execute** one task at a time: do it, run the proof now, paste the exit code
-   and last line into the evidence cell, then mark it done and update NOW.
+   and last line into the evidence cell, then mark it done and update NOW. When a
+   task fights back and you find the fix, record it in PLAN.md § Learnings so the
+   next session does not repeat the struggle.
 5. **Close** by re-running every proof and retiring the plan.
 
 **Your judgement outranks the gate.** Never make a red gate pass; never trust a

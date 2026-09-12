@@ -36,6 +36,13 @@ Three rules make the plan trustworthy. They are the whole point of this system:
    code and last line are pasted into the plan. An empty evidence cell is not
    done, whatever the status column says.
 
+The plan is also the project's memory. Besides the tasks, PLAN.md carries the
+**Rules** you must not break, the **Decisions** you made and why, and the
+**Learnings** — a mistake or dead end, written as the rule that avoids it next
+time. The reload line brings all of it back at the start of every session, so a
+lesson learned in one chat is read by the next one *before* it repeats the
+struggle. That is how you stop paying for the same mistake twice.
+
 ---
 
 ## §1 Get ready
@@ -110,15 +117,20 @@ Pick a short kebab-case `<id>` (`weekly-digest`). Then:
   back on its own. (For a tool that does not do `@`-imports, put the plan's path
   in `AGENTS.md` and open it by hand at the start of each session.)
 - **Wire the checker, if the project runs Node and has a check command.**
-  `npx planrails init` already put it at `.project-management/check-plans.mjs`; if
-  you did not run init, copy this repo's `tools/check-plans.mjs` there. Add
-  `node .project-management/check-plans.mjs` to the check command. Now the build
-  fails if a task is marked done with no evidence. If the project is not Node,
+  `npx planrails init` already put it at `.project-management/planrails/check-plans.mjs`;
+  if you did not run init, copy this repo's `tools/check-plans.mjs` there. Add
+  `node .project-management/planrails/check-plans.mjs` to the check command. Now the
+  build fails if a task is marked done with no evidence. If the project is not Node,
   skip this; the plan still works, and you enforce the gate yourself.
 
 ---
 
 ## §4 Execute — one task at a time
+
+**At the start of every session, read the plan back first.** The reload line has
+already loaded PLAN.md. Read **NOW**, then the **Rules** and the **Learnings**,
+before you touch anything. The Learnings are mistakes a past session already paid
+for — read them and you skip the struggle instead of repeating it.
 
 The loop for each task:
 
@@ -131,6 +143,10 @@ The loop for each task:
 5. **Set it done.** Only now. Update **NOW** to point at the next task.
 6. **Append one line to LOG.md** — what landed, what is next, anything learned,
    any decision made.
+7. **If the task fought back, record the learning.** An error, a wrong turn, an
+   hour lost before you found the cause — add it to PLAN.md under **Learnings** as
+   "trap → rule", with the real case. LOG.md holds what happened; Learnings holds
+   the rule, because Learnings reloads every session and the log does not.
 
 **Update NOW before you end any turn.** NOW is the first thing a fresh session
 reads. If it is stale, the next session repeats your work or starts in the wrong
@@ -158,6 +174,9 @@ the task `blocked` with the reason, and stop. Do not hand-fix state to look done
 3. **Retire the plan.** Move its reload line out of "Active plans" into a
    "Finished" list (or delete the line). The plan files stay on disk; they are the
    record.
+4. **Graduate any lasting learning.** A learning that is true beyond this feature
+   moves to the always-loaded file (`CLAUDE.md` / `AGENTS.md`), so it outlives the
+   plan you are retiring. One that was only about this work retires with it.
 
 ---
 
@@ -172,6 +191,11 @@ Each line here was paid for by a real failure in earlier planning systems:
   A named command that must be run and pasted can.
 - **Evidence at close** is the one machine-checkable rail worth keeping. The
   checker enforces exactly this and nothing else.
+- **Learnings live in the plan, not only the log.** The log is history a fresh
+  session does not re-read; the plan is reloaded every session. A mistake written
+  as a rule, where the next session will see it, is the only kind that stops being
+  repeated. The same struggle coming back in a new chat is the exact failure this
+  fixes.
 - **Sub-agent findings are leads** because four spot-checked findings were each
   right in direction and wrong in number, and a wrong number becomes a wrong plan.
 - **Repo-relative paths** because absolute paths break on the next machine, and a
@@ -181,8 +205,10 @@ Each line here was paid for by a real failure in earlier planning systems:
   package, and that is what broke on the projects that were not npm — Python,
   pnpm, bun, monorepos, Windows. A prompt and a copied script work everywhere.
 
-Keep it this simple. If you are tempted to add a config file, a second script, or
-a fourth rule, you are rebuilding the thing this replaced.
+Keep it this simple. The three rails — reload, proof, evidence — are the whole
+machine-checked core. If you are tempted to add a config file, a second script, or
+a fourth rail, you are rebuilding the thing this replaced. (Rules, Decisions and
+Learnings are plain sections of the plan, not new machinery.)
 
 ---
 
@@ -232,6 +258,14 @@ updated: <YYYY-MM-DD HH:MM>
 |------|----------|-----|
 | <YYYY-MM-DD> | <what was chosen> | <the reason and what it rules out> |
 
+## Learnings
+<!-- Mistakes already paid for, so no later session repeats them. Each line: the
+     trap, then the rule it taught, with the real case. Not a Rule (a constraint
+     known up front) and not a Decision (a choice between options) — a learning is
+     what a failure taught you. Add one the moment a task fights back. This section
+     reloads with the plan every session; that is what makes the lesson stick. -->
+- <the trap you hit> → <the rule that avoids it> (<the real case, one line>)
+
 ## Context (read during planning — do not re-read)
 - <path> — <one line of what it holds>
 ````
@@ -251,5 +285,6 @@ Append-only. One entry per landed piece of work, newest at the bottom.
 - files: <repo-relative paths touched>
 - proof: <the command and its result — e.g. `npx vitest run tests/digest.test.ts` → exit 0, "6 passed">
 - next: <what comes next; where you stopped if you paused>
-- learned / decided: <anything a second reader needs; omit if nothing>
+- learned / decided: <anything a second reader needs; omit if nothing. A durable
+  trap also goes to PLAN.md § Learnings, which reloads every session>
 ````

@@ -11,8 +11,8 @@
  * (todo, doing, blocked, …). So no spelling of "done" — done, completed, ✅,
  * shipped, a typo — can slip through unchecked.
  *
- * `npx planrails init` copies this file into a project's .project-management/;
- * add `node .project-management/check-plans.mjs` to the command you run before
+ * `npx planrails init` copies this file into a project's .project-management/planrails/;
+ * add `node .project-management/planrails/check-plans.mjs` to the command you run before
  * every commit. No dependencies. Runs on Node 20+ on any OS.
  *
  *   node check-plans.mjs            # structural: completion claims need proof + evidence

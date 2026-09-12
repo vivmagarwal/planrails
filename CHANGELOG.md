@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.3.0 — 2026-09-12
+
+Two changes, both asked for by a user planning a long, multi-session feature:
+carry learnings forward so a mistake is not re-paid in the next chat, and tidy the
+installed files into one folder.
+
+- **Learnings are now a first-class, reloaded part of a plan.** `PLAN.md` gains a
+  `## Learnings` section: each line is the trap and the rule it taught. It reloads
+  with the plan at the start of every session — and after every compaction —
+  through the same reload line, so the next session reads the lesson before it
+  repeats the struggle. A learning is distinct from a `Rule` (a constraint known
+  up front) and a `Decision` (a choice and why). `PLANNER.md` makes capturing a
+  learning a step of the execute loop, written the moment a task fights back; tells
+  a resuming session to read the Learnings first; and graduates a learning that
+  outlives the plan to the always-loaded file. Until now the only place for a
+  lesson was a `LOG.md` line, and the log is neither reloaded nor re-read — which
+  is exactly why the same struggle returned in each new session.
+- **The two installed files move into `.project-management/planrails/`.** `init`
+  now writes `.project-management/planrails/PLANNER.md` and
+  `.project-management/planrails/check-plans.mjs`, leaving `.project-management/`
+  holding just two folders: `planrails/` (the tool) and `plans/` (your plans). The
+  reload line is unchanged — `@.project-management/plans/<id>/PLAN.md`. If you ran
+  an older `init`, point your check command at the new path
+  (`node .project-management/planrails/check-plans.mjs`) and remove the two loose
+  files left at the `.project-management/` root.
+- The checker's behaviour is unchanged: learnings are prose, enforced by the
+  method, not the gate, and a plan with no `Learnings` section still validates. A
+  test pins that a `Learnings` section does not confuse the parser. 34 tests.
+
 ## 0.2.1 — 2026-09-12
 
 A careful post-release review, including an end-to-end test of the published

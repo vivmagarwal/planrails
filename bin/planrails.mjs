@@ -3,14 +3,14 @@
  * planrails — a planner prompt and one checker. Two commands, both safe:
  *
  *   npx planrails init [--dir DIR] [--force]
- *       Copies PLANNER.md and the checker into <project>/.project-management/ and
- *       makes the plans/ folder. It writes nothing else — no package.json, no npm
+ *       Copies PLANNER.md and the checker into <project>/.project-management/planrails/
+ *       and makes the plans/ folder. It writes nothing else — no package.json, no npm
  *       install, no hooks, no edits to your CLAUDE.md. Idempotent: it skips files
  *       that already exist unless you pass --force.
  *
  *   npx planrails check [--dir DIR] [--verify]
  *       Runs the checker over the project's plans. --verify re-runs each done
- *       task's proof. Same as running the copied .project-management/check-plans.mjs.
+ *       task's proof. Same as running the copied .project-management/planrails/check-plans.mjs.
  *
  *   planrails --version | --help
  */
@@ -28,8 +28,8 @@ const HELP = `planrails ${version()} — a planner prompt and one checker.
   npx planrails check [--dir DIR] [--verify] check the project's plans
   planrails --version | --help
 
-After init, tell your agent:  Follow .project-management/PLANNER.md and plan <the feature> with me.
-Add to the command you run before every commit:  node .project-management/check-plans.mjs
+After init, tell your agent:  Follow .project-management/planrails/PLANNER.md and plan <the feature> with me.
+Add to the command you run before every commit:  node .project-management/planrails/check-plans.mjs
 Full guide: https://github.com/vivmagarwal/planrails#readme`;
 
 function flag(args, name) {
@@ -43,7 +43,9 @@ function init(args) {
   const target = resolve(flag(args, "--dir") || ".");
   const force = args.includes("--force");
   const pm = join(target, ".project-management");
+  const sys = join(pm, "planrails");
   const plans = join(pm, "plans");
+  mkdirSync(sys, { recursive: true });
   mkdirSync(plans, { recursive: true });
 
   const copy = (from, to, label) => {
@@ -52,18 +54,18 @@ function init(args) {
     console.log(`  + ${label}`);
   };
   console.log(`planrails ${version()} → ${target}`);
-  copy(join(ROOT, "PLANNER.md"), join(pm, "PLANNER.md"), ".project-management/PLANNER.md");
-  copy(join(ROOT, "tools", "check-plans.mjs"), join(pm, "check-plans.mjs"), ".project-management/check-plans.mjs");
+  copy(join(ROOT, "PLANNER.md"), join(sys, "PLANNER.md"), ".project-management/planrails/PLANNER.md");
+  copy(join(ROOT, "tools", "check-plans.mjs"), join(sys, "check-plans.mjs"), ".project-management/planrails/check-plans.mjs");
   const keep = join(plans, ".gitkeep");
   if (!existsSync(keep)) { writeFileSync(keep, ""); console.log("  + .project-management/plans/"); }
   else console.log("  · .project-management/plans/ already present");
 
   console.log(`
 Next:
-  1. Tell your agent:  Follow .project-management/PLANNER.md and plan <the feature> with me.
+  1. Tell your agent:  Follow .project-management/planrails/PLANNER.md and plan <the feature> with me.
      (Or, in Claude Code, use /plan if you installed the skill.)
   2. Add to the command you run before every commit:
-       node .project-management/check-plans.mjs
+       node .project-management/planrails/check-plans.mjs
   3. When the agent writes a plan, it adds one line to your CLAUDE.md so the plan
      reloads after every compaction:  @.project-management/plans/<id>/PLAN.md`);
   return 0;

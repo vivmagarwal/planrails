@@ -89,6 +89,12 @@ describe("checkPlan — what counts as a completion claim", () => {
     assert.equal(p.length, 1);
     assert.match(p[0], /T2/);
   });
+  it("ignores a Learnings section and still gates the task", () => {
+    const text = table(["| T1 | x | done | `c` | |"]) + "\n## Learnings\n- mocking the seam hid a real break → assert against the comms log (40 min on T1)\n- keep evidence a pasted exit line, not a word\n";
+    const p = checkPlan({ id: "p", text });
+    assert.equal(p.length, 1);
+    assert.match(p[0], /T1: status "done" but the evidence cell is empty/);
+  });
   it("skips not-done statuses (todo, doing, blocked, wip, in progress, pending, cancelled)", () => {
     for (const s of ["todo", "doing", "blocked", "wip", "in progress", "in-progress", "pending", "cancelled", "n/a"]) {
       assert.deepEqual(checkPlan({ id: "p", text: one(s) }), [], `status ${JSON.stringify(s)} should be skipped`);
