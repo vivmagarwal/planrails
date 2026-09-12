@@ -1,6 +1,6 @@
 {
   "name": "planrails",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Plans that survive compaction, for Claude Code: gates that prove a task done, conditions answered before it closes, briefs and rules injected by hooks, one fresh session per task.",
   "type": "module",
   "bin": {
