@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.1 — 2026-09-12
+
+A careful post-release review, including an end-to-end test of the published
+package, found one robustness gap in the checker and fixed it.
+
+- The checker finds a task table by its columns (`id`, `status`, `proof`,
+  `evidence`), not by a `## Tasks` heading. So tasks under `## Phase 2 Tasks`,
+  `## Backlog`, any heading, or none at all are all gated — a phased plan is no
+  longer rejected with a confusing "no readable Tasks table". A table under a
+  literal `## Tasks` heading that is missing a column still names which one.
+- Verified against the live 0.2.0 package: `npx planrails init` copies only into
+  `.project-management/`, leaves `package.json` and a pnpm lockfile untouched,
+  writes no `node_modules` and no `CLAUDE.md`, and the checker catches every
+  faked-"done" bypass. 33 tests.
+
 ## 0.2.0 — 2026-09-12
 
 Rebuilt as a planner prompt and one checker, with a two-command CLI that only

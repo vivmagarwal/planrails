@@ -80,41 +80,55 @@ const isRow = (l) => l.trim().startsWith("|");
 const isHeading = (l) => /^#{1,6}\s/.test(l.trim());
 const isSeparator = (l) => /^\|[\s:|-]+\|?\s*$/.test(l.trim());
 
+const REQUIRED = ["id", "status", "proof", "evidence"];
+/** The column indices of a row, and which required columns it is missing. */
+function headerCols(rowText) {
+  const h = cells(rowText).map((c) => c.toLowerCase());
+  const ci = { id: h.indexOf("id"), task: h.indexOf("task"), status: h.indexOf("status"), proof: h.indexOf("proof"), evidence: h.indexOf("evidence") };
+  return { ci, missing: REQUIRED.filter((k) => ci[k] === -1) };
+}
+
 /**
- * Parse the task rows of a plan. Scans EVERY "## Tasks" section; within a
- * section it collects all table rows to the next heading, so a blank line in the
- * middle does not end the table and a second table is not lost. Columns are
- * matched by name, in any order. Returns { found, tasks, missingCols }.
+ * Parse the task rows of a plan. A "task table" is any markdown table whose
+ * header carries the four columns id, status, proof, evidence — found by its
+ * columns, not by a heading, so tasks under "## Tasks", "## Phase 2 Tasks",
+ * "## Backlog", or a second table are all read; blank lines inside a table are
+ * tolerated. Returns { found, tasks, missingCols }.
  */
 export function parseTasks(text) {
   const lines = text.split(/\r?\n/);
-  let found = false;
   const tasks = [];
-  const missingCols = new Set();
-  for (let i = 0; i < lines.length; i++) {
-    if (!/^#{1,6}\s+tasks\b/i.test(lines[i].trim())) continue;
-    const rows = [];
+  let found = false;
+  let i = 0;
+  while (i < lines.length) {
+    if (!isRow(lines[i]) || isSeparator(lines[i]) || headerCols(lines[i]).missing.length) { i++; continue; }
+    found = true; // lines[i] is a task-table header (a | row naming all four columns)
+    const { ci } = headerCols(lines[i]);
     let j = i + 1;
     for (; j < lines.length; j++) {
-      if (isHeading(lines[j])) break;
-      if (isRow(lines[j])) rows.push({ text: lines[j], line: j + 1 });
-    }
-    i = j - 1;
-    if (!rows.length) continue;
-    const header = cells(rows[0].text).map((h) => h.toLowerCase());
-    const ci = { id: header.indexOf("id"), task: header.indexOf("task"), status: header.indexOf("status"), proof: header.indexOf("proof"), evidence: header.indexOf("evidence") };
-    const missing = ["id", "status", "proof", "evidence"].filter((k) => ci[k] === -1);
-    if (missing.length) { missing.forEach((m) => missingCols.add(m)); continue; }
-    found = true;
-    for (const row of rows.slice(1)) {
-      if (isSeparator(row.text)) continue;
-      const c = cells(row.text);
+      const l = lines[j];
+      if (isHeading(l)) break; // a heading ends the table
+      if (l.trim() === "") continue; // a blank line inside the table does not
+      if (!isRow(l)) break; // prose ends the table
+      if (isSeparator(l)) continue;
+      if (headerCols(l).missing.length === 0) break; // the next table's header — reprocess it
+      const c = cells(l);
       const at = (idx) => (idx >= 0 && idx < c.length ? c[idx] : "");
-      if (norm(at(ci.status)) === "status" && norm(at(ci.id)) === "id") continue; // a repeated header row
-      tasks.push({ id: at(ci.id), task: at(ci.task), status: at(ci.status), proof: at(ci.proof), evidence: at(ci.evidence), line: row.line });
+      tasks.push({ id: at(ci.id), task: at(ci.task), status: at(ci.status), proof: at(ci.proof), evidence: at(ci.evidence), line: j + 1 });
+    }
+    i = j;
+  }
+  // A helpful message for the common slip: a "## Tasks" table missing one column.
+  let missingCols = [];
+  if (!found) {
+    for (let k = 0; k < lines.length && !missingCols.length; k++) {
+      if (!/^#{1,6}\s+tasks\b/i.test(lines[k].trim())) continue;
+      for (let m = k + 1; m < lines.length && !isHeading(lines[m]); m++) {
+        if (isRow(lines[m]) && !isSeparator(lines[m])) { const miss = headerCols(lines[m]).missing; if (miss.length && miss.length < REQUIRED.length) missingCols = miss; break; }
+      }
     }
   }
-  return { found, tasks, missingCols: [...missingCols] };
+  return { found, tasks, missingCols };
 }
 
 /** The command inside a proof cell (backticks stripped), or null for `owner`/prose/empty. */
@@ -129,7 +143,7 @@ export function checkPlan({ id, text, verify = false, run = null }) {
   const { found, tasks, missingCols } = parseTasks(text);
   if (!found) {
     if (missingCols.length) problems.push(`${id}: the Tasks table is missing the ${missingCols.map((c) => `"${c}"`).join(", ")} column(s)`);
-    else problems.push(`${id}: no readable Tasks table (needs a | id | task | status | proof | evidence | table under a "## Tasks" heading)`);
+    else problems.push(`${id}: no readable Tasks table (needs a | id | task | status | proof | evidence | table)`);
     return problems;
   }
   for (const t of tasks) {

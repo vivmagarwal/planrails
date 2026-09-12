@@ -45,6 +45,22 @@ describe("parseTasks", () => {
   });
 });
 
+describe("parseTasks — finds tables by their columns, not the heading", () => {
+  const done = (heading) => `# Plan\n\n${heading}\n\n| id | task | status | proof | evidence |\n|--|--|--|--|--|\n| T1 | x | done | \`c\` | |\n`;
+  it("catches a done+empty task under a phased heading", () => {
+    assert.match(checkPlan({ id: "b", text: done("## Phase 2 Tasks") })[0], /T1: status "done" but the evidence cell is empty/);
+  });
+  it("catches one under a non-tasks heading (## Backlog)", () => {
+    assert.match(checkPlan({ id: "c", text: done("## Backlog") })[0], /T1/);
+  });
+  it("catches one under no heading at all", () => {
+    assert.match(checkPlan({ id: "d", text: "| id | task | status | proof | evidence |\n|--|--|--|--|--|\n| T1 | x | done | `c` | |\n" })[0], /T1/);
+  });
+  it("still reports a missing column under a ## Tasks heading, not a generic error", () => {
+    assert.match(checkPlan({ id: "e", text: "## Tasks\n\n| id | task | status | proof |\n|--|--|--|--|\n| T1 | x | done | `c` |\n" })[0], /missing the "evidence" column/);
+  });
+});
+
 describe("checkPlan — what counts as a completion claim", () => {
   it("passes a done task with proof and evidence", () => {
     assert.deepEqual(checkPlan({ id: "p", text: one("done", "`npm test`", "2026-09-12 exit 0") }), []);
