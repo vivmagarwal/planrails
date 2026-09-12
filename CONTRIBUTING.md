@@ -41,3 +41,33 @@ a real project.
   commit.
 - Never let the agent bend a gate. If a change makes it easier to mark a task
   done without evidence, it will not be merged.
+
+## 4. Release (maintainers)
+
+```bash
+# 1. the CHANGELOG has a "## <new version> — <date>" entry, committed
+# 2. bump, commit and tag in one step; push the commit and the tag
+npm version patch            # or minor / major → commit "0.1.2" + tag v0.1.2
+git push --follow-tags
+# 3. wait for CI (six jobs: ubuntu and macos × Node 20, 22, 24), then publish
+npm publish
+```
+
+Two lifecycle scripts run around `npm publish` (`scripts/release-check.mjs`):
+
+- **before** (`prepublishOnly`) refuses, one plain sentence each, when the
+  version is already on the registry, the CHANGELOG has no entry for it, the
+  working tree is dirty, or HEAD is not pushed. npm's own escape hatch is
+  `npm publish --ignore-scripts`.
+- **after** (`postpublish`) waits until the registry serves the version, then
+  prints the next lines.
+
+**Why the wait exists — measured 2026-09-12 with npm 11.3.0.** A web-authenticated
+publish is *staged*: the registry answers the upload with `202 Accepted` and
+finalizes the version about a minute later. For 0.1.1 the upload was accepted at
+07:27:5x UTC and the version became visible at 07:29:05. Inside that window a
+second `npm publish` fails with `E409 Cannot publish over previously staged
+version`, and `npm install planrails@<version>` fails with `ETARGET No matching
+version found` — it did three times, the last one one second before the version
+appeared. So after `npm publish` returns, do not run it again; let `after` wait,
+or check with `npm view planrails version`.

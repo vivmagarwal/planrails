@@ -22,7 +22,9 @@
     "selftest": "node bin/planrails.mjs selftest && node src/hooks/selftest.mjs",
     "acceptance": "node scripts/acceptance.mjs",
     "trial": "node scripts/trial/run.mjs",
-    "prepack": "npm test"
+    "prepack": "npm test",
+    "prepublishOnly": "node scripts/release-check.mjs before",
+    "postpublish": "node scripts/release-check.mjs after"
   },
   "dependencies": {
     "zod": "^4.4.3"

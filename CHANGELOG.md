@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2 — 2026-09-12
+
+- `npx planrails update` now also rewrites the plans block in CLAUDE.md from the plans on disk, so a marker or wording written by an older version is replaced on upgrade. `test/claude-md.test.mjs`.
+- Release checks around `npm publish` (`scripts/release-check.mjs`, wired as `prepublishOnly` and `postpublish`): before uploading, refuse a version the registry already has, a missing CHANGELOG entry, a dirty tree or an unpushed HEAD; after uploading, wait until the registry serves the version. Why: a web-authenticated publish is staged and finalizes about a minute later; in that window a second publish fails with E409 and an install with ETARGET, which is how 0.1.1's release went. CONTRIBUTING.md § Release. `test/release-check.test.mjs`.
+
 ## 0.1.1 — 2026-09-12
 
 Fixed, found while moving a real project from a vendored copy to the package:

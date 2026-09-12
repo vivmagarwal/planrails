@@ -130,7 +130,7 @@ export async function init({ dir = null, force = false, noInstall = false, withN
   return problems ? 1 : 0;
 }
 
-/** Refresh the guide, the skill and the hook entries to this version. Plans are never touched. */
+/** Refresh the guide, the skill, the hook entries and the CLAUDE.md plans block to this version. Plans are never touched. */
 export async function update({ dir = null, log = console.log } = {}) {
   if (dir) process.env.PLAN_PROJECT_ROOT = resolve(dir);
   const root = projectRoot();
@@ -138,6 +138,12 @@ export async function update({ dir = null, log = console.log } = {}) {
   const guideDest = join(root, "docs", "PLANNING_GUIDE.md");
   if (!existsSync(guideDest) || readFileSync(guideDest, "utf8") !== readFileSync(guideSrc, "utf8")) { mkdirSync(join(root, "docs"), { recursive: true }); copyFileSync(guideSrc, guideDest); log("refreshed docs/PLANNING_GUIDE.md"); }
   else log("docs/PLANNING_GUIDE.md is current");
+  // The plans block, rewritten from the plans on disk: a marker or wording written by an older version is replaced.
+  try {
+    const { activePlanIds, loadPlanCheap } = await import("./plan/lib/store.mjs");
+    const active = activePlanIds().map((id) => ({ id, title: loadPlanCheap(id).state?.title || id }));
+    if (existsSync(claudeMdPath())) log(writeBlock(claudeMdPath(), active) ? "refreshed the plans block in CLAUDE.md" : "the plans block in CLAUDE.md is current");
+  } catch (e) { log(`could not refresh the plans block in CLAUDE.md: ${e.message}`); }
   const { install, status } = await import("./hooks/install.mjs");
   install({});
   const { problems } = status({ print: false });
