@@ -12,8 +12,8 @@ work that is not. planrails fixes that with three plain rules and almost no code
 2. **Every task names its proof before the work starts** — the command that will
    show it is done. No command, no way to fake it later.
 3. **A task is done only when its proof was run and pasted in.** An empty evidence
-   cell is not done, whatever the status says. A ~130-line checker enforces this
-   in your build.
+   cell is not done, whatever the status says. A small, dependency-free checker
+   enforces this in your build.
 
 It works in any project — Node, Python, Go, a monorepo, Windows — because it adds
 two files and changes nothing else.
@@ -121,8 +121,13 @@ npx planrails check                                 # the same, using the latest
 ```
 
 No dependencies. Node 20+, any OS (Windows included). The default is a fast
-structural check; `--verify` actually re-runs each done task's proof, for when
-you want the build to prove every "done" all over again.
+structural check: every task that claims to be finished must name a proof and
+carry pasted evidence, and no spelling of "done" can slip past it.
+
+`--verify` goes further and **runs** each proof again. Because it executes the
+commands written in the plan, use it only on plans you trust — run the default
+structural check in CI that builds untrusted pull requests, and keep `--verify`
+for your own branch or a trusted pipeline.
 
 ## On a team
 

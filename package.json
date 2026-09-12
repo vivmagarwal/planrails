@@ -5,7 +5,7 @@
   "type": "module",
   "license": "MIT",
   "bin": { "planrails": "bin/planrails.mjs" },
-  "files": ["bin/", "PLANNER.md", "tools/check-plans.mjs", "README.md", "LICENSE", "CHANGELOG.md"],
+  "files": ["bin/planrails.mjs", "PLANNER.md", "tools/check-plans.mjs", "README.md", "LICENSE", "CHANGELOG.md"],
   "repository": { "type": "git", "url": "git+https://github.com/vivmagarwal/planrails.git" },
   "homepage": "https://github.com/vivmagarwal/planrails#readme",
   "bugs": { "url": "https://github.com/vivmagarwal/planrails/issues" },

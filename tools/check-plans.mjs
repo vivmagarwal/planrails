@@ -3,15 +3,22 @@
  * check-plans — the one machine-checked rail of the planner.
  *
  * It reads every PLAN.md under .project-management/plans/<id>/ and enforces a
- * single rule: a task marked done must name a proof and must carry evidence that
- * the proof was run. An empty evidence cell on a done task fails the build.
+ * single rule: a task that claims to be finished must name a proof and carry
+ * evidence that the proof was run. An empty evidence cell fails the build.
+ *
+ * The rule is biased toward catching a faked "done": a task counts as a
+ * completion claim UNLESS its status is blank or an explicit not-done word
+ * (todo, doing, blocked, …). So no spelling of "done" — done, completed, ✅,
+ * shipped, a typo — can slip through unchecked.
  *
  * `npx planrails init` copies this file into a project's .project-management/;
  * add `node .project-management/check-plans.mjs` to the command you run before
  * every commit. No dependencies. Runs on Node 20+ on any OS.
  *
- *   node check-plans.mjs            # structural: done tasks must have proof + evidence
- *   node check-plans.mjs --verify   # also re-run each done task's proof, expect exit 0
+ *   node check-plans.mjs            # structural: completion claims need proof + evidence
+ *   node check-plans.mjs --verify   # ALSO re-runs each claim's proof, expects exit 0.
+ *                                    #   ⚠ --verify executes the proof commands. Only run it
+ *                                    #   on plans you trust — never on an untrusted pull request.
  *   node check-plans.mjs --root DIR # check a project other than the current directory
  *
  * The functions are pure over their inputs, so check-plans.test.mjs exercises
@@ -23,89 +30,142 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const EMPTY = /^[\s\-—–·]*$/; // blank, or a dash/dot someone wrote for "nothing"
-const DONE = new Set(["done", "✅", "✔", "✔️"]);
 
-/** Split one markdown table row `| a | b |` into trimmed cells. */
+// A task is a completion claim unless its status is one of these. Kept generous
+// so a normal not-done status is never mistaken for a claim; anything unknown is
+// treated AS a claim (needs evidence), which is the safe direction for a gate.
+const NOT_DONE = new Set([
+  "todo", "todos", "doing", "wip", "inprogress", "started", "starting", "blocked", "block",
+  "pending", "review", "inreview", "needsreview", "qa", "testing", "test", "backlog",
+  "paused", "onhold", "hold", "waiting", "new", "open", "deferred", "planned", "notstarted",
+  "cancelled", "canceled", "wontfix", "wontdo", "dropped", "abandoned", "skip", "skipped", "na",
+]);
+// A lone one of these in the evidence cell is a placeholder, not evidence.
+const NON_EVIDENCE = new Set(["tbd", "tba", "tbc", "todo", "pending", "later", "wip", "none", "na"]);
+
+/** Normalise a status or a short token for matching: drop markup, spaces, hyphens, trailing punctuation. */
+function norm(s) {
+  return s.replace(/[`*_[\]()'"’/]/g, "").replace(/[.!?]+$/, "").replace(/[\s-]+/g, "").replace(/️/g, "").toLowerCase();
+}
+function isCompletionClaim(status) {
+  if (EMPTY.test(status)) return false; // blank = not filled in = not a claim
+  return !NOT_DONE.has(norm(status));
+}
+function evidenceMissing(ev) {
+  const n = norm(ev);
+  return EMPTY.test(ev) || n === "" || NON_EVIDENCE.has(n);
+}
+
+/**
+ * Split one markdown table row `| a | b |` into trimmed cells, respecting
+ * backtick code spans and \| escapes — so a pipe inside a proof command
+ * (`npm test | tail -1`) does not shift the columns.
+ */
 function cells(line) {
-  return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
+  const s = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+  const out = [];
+  let cur = "";
+  let inCode = false;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === "\\" && s[i + 1] === "|") { cur += "|"; i++; continue; }
+    if (ch === "`") { inCode = !inCode; cur += ch; continue; }
+    if (ch === "|" && !inCode) { out.push(cur.trim()); cur = ""; continue; }
+    cur += ch;
+  }
+  out.push(cur.trim());
+  return out;
 }
 const isRow = (l) => l.trim().startsWith("|");
 const isHeading = (l) => /^#{1,6}\s/.test(l.trim());
 const isSeparator = (l) => /^\|[\s:|-]+\|?\s*$/.test(l.trim());
 
 /**
- * Parse the task table under a `## Tasks` heading.
- * Returns { found, tasks }: found is true when a header row with the four named
- * columns was located (even if it has no data rows — a new plan). tasks is the
- * data rows. Columns are matched by name, so their order does not matter.
+ * Parse the task rows of a plan. Scans EVERY "## Tasks" section; within a
+ * section it collects all table rows to the next heading, so a blank line in the
+ * middle does not end the table and a second table is not lost. Columns are
+ * matched by name, in any order. Returns { found, tasks, missingCols }.
  */
 export function parseTasks(text) {
   const lines = text.split(/\r?\n/);
-  const start = lines.findIndex((l) => /^#{1,6}\s+tasks\b/i.test(l.trim()));
-  if (start === -1) return { found: false, tasks: [] };
-  let i = start + 1;
-  while (i < lines.length && !isRow(lines[i]) && !isHeading(lines[i])) i++;
-  if (i >= lines.length || !isRow(lines[i])) return { found: false, tasks: [] };
-  const header = cells(lines[i]).map((h) => h.toLowerCase());
-  const ci = { id: header.indexOf("id"), task: header.indexOf("task"), status: header.indexOf("status"), proof: header.indexOf("proof"), evidence: header.indexOf("evidence") };
-  if (ci.id === -1 || ci.status === -1 || ci.proof === -1 || ci.evidence === -1) return { found: false, tasks: [] };
+  let found = false;
   const tasks = [];
-  for (i = i + 1; i < lines.length; i++) {
-    const l = lines[i];
-    if (!isRow(l) || isHeading(l)) break; // the table ends at the first non-row line
-    if (isSeparator(l)) continue;
-    const c = cells(l);
-    const at = (idx) => (idx >= 0 && idx < c.length ? c[idx] : "");
-    tasks.push({ id: at(ci.id), task: at(ci.task), status: at(ci.status).toLowerCase(), proof: at(ci.proof), evidence: at(ci.evidence), line: i + 1 });
+  const missingCols = new Set();
+  for (let i = 0; i < lines.length; i++) {
+    if (!/^#{1,6}\s+tasks\b/i.test(lines[i].trim())) continue;
+    const rows = [];
+    let j = i + 1;
+    for (; j < lines.length; j++) {
+      if (isHeading(lines[j])) break;
+      if (isRow(lines[j])) rows.push({ text: lines[j], line: j + 1 });
+    }
+    i = j - 1;
+    if (!rows.length) continue;
+    const header = cells(rows[0].text).map((h) => h.toLowerCase());
+    const ci = { id: header.indexOf("id"), task: header.indexOf("task"), status: header.indexOf("status"), proof: header.indexOf("proof"), evidence: header.indexOf("evidence") };
+    const missing = ["id", "status", "proof", "evidence"].filter((k) => ci[k] === -1);
+    if (missing.length) { missing.forEach((m) => missingCols.add(m)); continue; }
+    found = true;
+    for (const row of rows.slice(1)) {
+      if (isSeparator(row.text)) continue;
+      const c = cells(row.text);
+      const at = (idx) => (idx >= 0 && idx < c.length ? c[idx] : "");
+      if (norm(at(ci.status)) === "status" && norm(at(ci.id)) === "id") continue; // a repeated header row
+      tasks.push({ id: at(ci.id), task: at(ci.task), status: at(ci.status), proof: at(ci.proof), evidence: at(ci.evidence), line: row.line });
+    }
   }
-  return { found: true, tasks };
+  return { found, tasks, missingCols: [...missingCols] };
 }
 
-/** The command inside a proof cell (backticks stripped), or null for `owner`/empty. */
+/** The command inside a proof cell (backticks stripped), or null for `owner`/prose/empty. */
 export function proofCommand(proof) {
   const m = proof.match(/`([^`]+)`/);
-  if (m) return m[1].trim();
-  return null; // `owner`, prose, or empty — nothing to re-run
+  return m ? m[1].trim() : null;
 }
 
 /** Problems with one plan's tasks. `run` (optional) executes a proof and returns its exit code. */
 export function checkPlan({ id, text, verify = false, run = null }) {
   const problems = [];
-  const { found, tasks } = parseTasks(text);
-  if (!found) { problems.push(`${id}: no readable Tasks table (needs a | id | task | status | proof | evidence | table under a "## Tasks" heading)`); return problems; }
+  const { found, tasks, missingCols } = parseTasks(text);
+  if (!found) {
+    if (missingCols.length) problems.push(`${id}: the Tasks table is missing the ${missingCols.map((c) => `"${c}"`).join(", ")} column(s)`);
+    else problems.push(`${id}: no readable Tasks table (needs a | id | task | status | proof | evidence | table under a "## Tasks" heading)`);
+    return problems;
+  }
   for (const t of tasks) {
-    if (!DONE.has(t.status)) continue;
-    const proofEmpty = EMPTY.test(t.proof);
-    const evidenceEmpty = EMPTY.test(t.evidence);
-    if (proofEmpty) problems.push(`${id} ${t.id}: marked done but names no proof (line ${t.line})`);
-    if (evidenceEmpty) problems.push(`${id} ${t.id}: marked done but the evidence cell is empty — run the proof and paste its result (line ${t.line})`);
-    if (verify && !proofEmpty && !evidenceEmpty && run) {
+    if (!isCompletionClaim(t.status)) continue;
+    const noProof = EMPTY.test(t.proof);
+    const noEvidence = evidenceMissing(t.evidence);
+    if (noProof) problems.push(`${id} ${t.id}: status "${t.status}" names no proof (line ${t.line})`);
+    if (noEvidence) problems.push(`${id} ${t.id}: status "${t.status}" but the evidence cell is empty — run the proof and paste its result (line ${t.line})`);
+    if (verify && !noProof && !noEvidence && run) {
       const cmd = proofCommand(t.proof);
-      if (cmd) {
-        const code = run(cmd);
-        if (code !== 0) problems.push(`${id} ${t.id}: proof re-run failed — \`${cmd}\` exited ${code}`);
-      }
+      if (cmd) { const code = run(cmd); if (code !== 0) problems.push(`${id} ${t.id}: proof re-run failed — \`${cmd}\` exited ${code}`); }
     }
   }
   return problems;
 }
 
-/** Every plan directory under .project-management/plans/ that has a PLAN.md. */
+/** Plan folders under .project-management/plans/. A folder with no PLAN.md is a problem. */
 export function findPlans(root) {
   const dir = join(root, ".project-management", "plans");
-  if (!existsSync(dir)) return [];
-  const out = [];
+  const plans = [];
+  const problems = [];
+  if (!existsSync(dir)) return { plans, problems };
   for (const name of readdirSync(dir)) {
+    let isDir = false;
+    try { isDir = statSync(join(dir, name)).isDirectory(); } catch { /* ignore */ }
+    if (!isDir) continue;
     const p = join(dir, name, "PLAN.md");
-    try { if (statSync(p).isFile()) out.push({ id: name, path: p }); } catch { /* not a plan dir */ }
+    if (existsSync(p)) plans.push({ id: name, path: p });
+    else problems.push(`${name}: plan folder has no PLAN.md`);
   }
-  return out;
+  return { plans, problems };
 }
 
 /** Check every plan under root. Returns { plans, problems }. */
 export function checkPlans({ root = ".", verify = false } = {}) {
-  const plans = findPlans(root);
-  const problems = [];
+  const { plans, problems } = findPlans(root);
   const run = verify ? (cmd) => { const r = spawnSync(cmd, { cwd: root, shell: true, stdio: "ignore" }); return r.status ?? 1; } : null;
   for (const { id, path } of plans) {
     let text = "";
@@ -127,12 +187,13 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const args = process.argv.slice(2);
   const verify = args.includes("--verify");
   const root = flagValue(args, "--root") || ".";
+  if (!existsSync(root)) { process.stderr.write(`check-plans: --root path does not exist: ${root}\n`); process.exit(2); }
   const { plans, problems } = checkPlans({ root, verify });
-  if (!plans.length) { process.stdout.write("check-plans: no plans under .project-management/plans/ — nothing to check\n"); process.exit(0); }
+  if (!plans.length && !problems.length) { process.stdout.write("check-plans: no plans under .project-management/plans/ — nothing to check\n"); process.exit(0); }
   if (problems.length) {
-    process.stderr.write(`check-plans: ${problems.length} problem(s) in ${plans.length} plan(s):\n${problems.map((p) => `  - ${p}`).join("\n")}\n`);
+    process.stderr.write(`check-plans: ${problems.length} problem(s):\n${problems.map((p) => `  - ${p}`).join("\n")}\n`);
     process.exit(1);
   }
-  process.stdout.write(`check-plans: ${plans.length} plan(s) ok — every done task has a proof and pasted evidence${verify ? " (proofs re-run)" : ""}\n`);
+  process.stdout.write(`check-plans: ${plans.length} plan(s) ok — every completion claim has a proof and pasted evidence${verify ? " (proofs re-run)" : ""}\n`);
   process.exit(0);
 }

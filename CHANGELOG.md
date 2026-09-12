@@ -18,10 +18,13 @@ What it is now, same three rails:
 - **`PLANNER.md`** — the prompt an agent reads to plan with you and then execute.
   Self-contained: the reload line, proof-before-work, evidence-at-close, and the
   plan and log templates are all in this one file.
-- **`tools/check-plans.mjs`** — ~130 lines, no dependencies, any OS (Windows in
-  CI). It enforces the one machine-checkable rule: a task marked done must name a
-  proof and carry pasted evidence. `--verify` re-runs each proof.
-  `tools/check-plans.test.mjs`.
+- **`tools/check-plans.mjs`** — a small, dependency-free checker (any OS; Windows
+  in CI). It enforces the one machine-checkable rule: a task that claims to be
+  finished must name a proof and carry pasted evidence. It is built to catch a
+  faked "done": any status that is not an explicit not-done word counts as a
+  claim, and a pipe inside a proof command, a second task table, and a blank line
+  in the table are all handled. `--verify` re-runs each proof (trusted plans
+  only). `tools/check-plans.test.mjs`.
 - **`bin/planrails.mjs`** — a safe CLI. `init` copies `PLANNER.md` and the checker
   into a project's `.project-management/` and writes nothing else (no
   `package.json`, no `npm install`, no hooks, no `CLAUDE.md` edits); `check` runs

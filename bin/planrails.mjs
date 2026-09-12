@@ -71,14 +71,15 @@ Next:
 
 function check(args) {
   const root = resolve(flag(args, "--dir") || ".");
+  if (!existsSync(root)) { console.error(`planrails check: --dir path does not exist: ${root}`); return 2; }
   const verify = args.includes("--verify");
   const { plans, problems } = checkPlans({ root, verify });
-  if (!plans.length) { console.log("check-plans: no plans under .project-management/plans/ — nothing to check"); return 0; }
+  if (!plans.length && !problems.length) { console.log("check-plans: no plans under .project-management/plans/ — nothing to check"); return 0; }
   if (problems.length) {
-    console.error(`check-plans: ${problems.length} problem(s) in ${plans.length} plan(s):\n${problems.map((p) => `  - ${p}`).join("\n")}`);
+    console.error(`check-plans: ${problems.length} problem(s):\n${problems.map((p) => `  - ${p}`).join("\n")}`);
     return 1;
   }
-  console.log(`check-plans: ${plans.length} plan(s) ok — every done task has a proof and pasted evidence${verify ? " (proofs re-run)" : ""}`);
+  console.log(`check-plans: ${plans.length} plan(s) ok — every completion claim has a proof and pasted evidence${verify ? " (proofs re-run)" : ""}`);
   return 0;
 }
 
