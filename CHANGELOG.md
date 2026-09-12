@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.1 — 2026-09-12
+
+Fixed, found while moving a real project from a vendored copy to the package:
+
+- `npx planrails init` on a project that did not yet hold the package wrote the npx cache's absolute path into every hook command (machine-local, and evicted by npm). Hook commands now name `$CLAUDE_PROJECT_DIR/node_modules/planrails/…` whenever the project holds its own copy, whichever copy runs the installer. `test/hooks-path.test.mjs` reproduces it with a copied package.
+- A CLAUDE.md plans block written by an older copy of the system (a different generator name in its marker) was not recognised, so `init` and `activate` added a second block beside it. Any `<!-- plans:begin` marker now counts as the block. `test/claude-md.test.mjs`.
+- Internal: `npm test` lists the test files by name (`scripts/run-tests.mjs`); Node 20 does not expand the glob the 0.1.0 script used, so its CI jobs failed.
+
 ## 0.1.0 — 2026-09-12
 
 First release, extracted from the project it was built in after a day of use.

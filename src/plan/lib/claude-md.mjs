@@ -28,13 +28,15 @@ export function renderBlock(activePlans) {
   return lines.join("\n");
 }
 
+/** Any begin marker counts, whatever generator name it carries: an older copy of this system wrote a different one, and a second block must never be added beside it. */
+const BEGIN_PREFIX = "<!-- plans:begin";
 export function readBlock(md) {
-  const a = md.indexOf(BEGIN); const b = md.indexOf(END);
+  const a = md.indexOf(BEGIN_PREFIX); const b = md.indexOf(END);
   if (a === -1 || b === -1 || b < a) return null;
   return md.slice(a, b + END.length);
 }
 /** How many blocks the file holds. More than one is a merge accident; validate fails on it. */
-export function blockCount(md) { return md.split(BEGIN).length - 1; }
+export function blockCount(md) { return md.split(BEGIN_PREFIX).length - 1; }
 
 /** Plan ids currently listed in the block (for the drift check). */
 export function idsInBlock(md) {

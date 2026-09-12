@@ -15,10 +15,11 @@
  * and every teammate's machine runs the copy in THEIR node_modules. If planrails
  * is not installed under the project's node_modules (a checkout, a global
  * install), the command falls back to the absolute path of this copy and
- * `doctor` says so. Paths are always quoted: an unquoted path with a space runs
+ * `doctor` says so. The project's copy wins whenever it exists, whichever copy
+ * runs the installer (0.1.0 wrote the npx cache path on a first init). Paths are always quoted: an unquoted path with a space runs
  * `node /Users/x/My` and silently disables every hook.
  */
-import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync, realpathSync, unlinkSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync, unlinkSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -43,11 +44,16 @@ export const OPTIONAL = {
 const ALL_FILES = new Set([...MANAGED, ...Object.values(OPTIONAL)].map((m) => m.file));
 const SKILL_SRC = join(HOOKS_DIR, "..", "plan", "skill", "SKILL.md");
 
-function same(a, b) { try { return realpathSync(a) === realpathSync(b); } catch { return false; } }
-/** Portable when the package sits in the project's node_modules; absolute otherwise. */
+/** Does the PROJECT hold its own copy of this hook under node_modules? That copy is what the hook command names. */
+function installedLocally(file) { return existsSync(join(projectRoot(), "node_modules", "planrails", "src", "hooks", file)); }
+/**
+ * Portable ($CLAUDE_PROJECT_DIR/node_modules/planrails/…) whenever the project holds its own copy, WHICHEVER copy runs
+ * this installer. 0.1.0 compared the running copy with the project's, so `npx planrails init` on a project that did not
+ * yet hold the package (the documented first step) wrote the npx cache's absolute path into every hook — machine-local,
+ * and evicted by npm. Absolute only when the project has no copy of its own.
+ */
 export function commandFor(m) {
-  const viaNodeModules = same(packageRoot(), join(projectRoot(), "node_modules", "planrails"));
-  const path = viaNodeModules ? `$CLAUDE_PROJECT_DIR/node_modules/planrails/src/hooks/${m.file}` : join(HOOKS_DIR, m.file);
+  const path = installedLocally(m.file) ? `$CLAUDE_PROJECT_DIR/node_modules/planrails/src/hooks/${m.file}` : join(HOOKS_DIR, m.file);
   return `${m.runner} "${path}"`;
 }
 function entryFor(m) {
@@ -122,7 +128,7 @@ export function install({ dryRun = false, withNeverDelete = false, remove = fals
     }
   } else if (!remove) lines.push(`(dry run) would install /plan skill → ${skillDest()}`);
   if (wanted.some((m) => m.file === "guard-never-delete.sh") && spawnSync("which", ["jq"]).status !== 0) lines.push("warn: jq not found — the never-delete guard needs it (brew install jq / apt install jq)");
-  if (!remove && !same(packageRoot(), join(projectRoot(), "node_modules", "planrails"))) lines.push(`note: planrails is not installed under ${join(projectRoot(), "node_modules")} — hook commands use the absolute path of this copy (${packageRoot()}), which only works on this machine. Run: npm install --save-dev planrails, then ${cli} hooks install`);
+  if (!remove && !installedLocally("plan-session-start.mjs")) lines.push(`note: planrails is not installed under ${join(projectRoot(), "node_modules")} — hook commands use the absolute path of this copy (${packageRoot()}), which only works on this machine. Run: npm install --save-dev planrails, then ${cli} hooks install`);
   lines.push(remove ? "Restart Claude Code (or run /hooks) so the removal takes effect." : "Restart Claude Code (or run /hooks) so the new hooks load.");
   process.stdout.write(lines.join("\n") + "\n");
   return { changed, replaced };

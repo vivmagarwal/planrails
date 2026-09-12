@@ -57,7 +57,7 @@ export async function init({ dir = null, force = false, noInstall = false, withN
   const installed = existsSync(join(root, "node_modules", "planrails", "package.json"));
   const declared = Boolean(pkg.devDependencies?.planrails || pkg.dependencies?.planrails);
   if (installed && declared) note(false, `planrails is a dependency (${readJson(join(root, "node_modules", "planrails", "package.json"), {}).version || "?"})`);
-  else if (noInstall || dryRun) note(false, `planrails not installed as a dependency (${noInstall ? "--no-install" : "dry run"}); hooks will use this copy's absolute path`);
+  else if (noInstall || dryRun) note(false, `planrails not installed as a dependency (${noInstall ? "--no-install" : "dry run"}); hooks name the project's own copy if it has one, else this copy's absolute path`);
   else {
     log(`installing planrails@${pkgVersion()} as a devDependency…`);
     const r = spawnSync("npm", ["install", "--save-dev", `planrails@${pkgVersion()}`], { cwd: root, stdio: "inherit" });
