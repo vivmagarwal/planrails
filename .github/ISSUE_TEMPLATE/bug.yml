@@ -1,30 +1,26 @@
 name: Bug report
-description: Something broke, refused wrongly, or crashed.
+description: The checker or the planner method broke, refused wrongly, or misled you.
 labels: ["bug"]
 body:
   - type: textarea
     id: what-happened
     attributes:
       label: What happened
-      description: What you ran, what it printed, what you expected instead. Paste the exact error text if it is short.
+      description: What you did, what happened, and what you expected instead. Paste the exact error text if it is short.
     validations:
       required: true
   - type: textarea
     id: repro
     attributes:
       label: How to reproduce
-      description: The smallest sequence of commands that shows it. A throwaway directory is ideal.
-      placeholder: |
-        mkdir t && cd t && npx planrails init --no-install
-        npx planrails new demo --title "x"
-        ...
+      description: The smallest example that shows it. If it is the checker, a tiny PLAN.md and the command you ran is ideal.
     validations:
       required: true
   - type: textarea
     id: environment
     attributes:
       label: Environment
-      description: Filled in by `npx planrails issue bug`. Otherwise paste the output of `npx planrails version`, `node --version`, `claude --version`, and `npx planrails doctor`.
+      description: Node version (`node --version`), your OS, and which part this is about — PLANNER.md, the templates, or tools/check-plans.mjs.
       render: text
     validations:
       required: true

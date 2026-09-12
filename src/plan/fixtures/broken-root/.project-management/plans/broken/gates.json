@@ -1,1 +1,0 @@
-{ "gates": [ { "id": "G1", "question": "does the fixture command exit zero", "notTheSameAs": "anything about a real system", "command": "true", "passWhen": "exit0", "timeoutSec": 10, "knownFail": null, "couldPassWhileWrongIf": "it is a fixture; it always passes", "kind": "static" } ] }
