@@ -18,7 +18,7 @@
     "node": ">=20.10"
   },
   "scripts": {
-    "test": "node --test \"test/**/*.test.mjs\"",
+    "test": "node scripts/run-tests.mjs",
     "selftest": "node bin/planrails.mjs selftest && node src/hooks/selftest.mjs",
     "acceptance": "node scripts/acceptance.mjs",
     "trial": "node scripts/trial/run.mjs",
