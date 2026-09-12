@@ -1,10 +1,15 @@
-# Publishes a tagged version to npm through trusted publishing (OIDC).
+# Publishes a tagged version to npm through trusted publishing (OIDC). No token.
 #
-# No npm token exists anywhere: the job proves its identity to npm with a short-lived
-# OpenID token that GitHub mints for this workflow, npm accepts a publish from this one
-# workflow of this one repository, and provenance is attached automatically (public
-# repository, public package). The one-time setup on npmjs.com is in CONTRIBUTING.md
-# § Release. Trigger: `npm version patch && git push --follow-tags`.
+# The job proves its identity to npm with a short-lived OpenID token that GitHub
+# mints for this workflow; npm accepts a publish from this one workflow of this
+# one repository, and provenance is attached automatically (public repo, public
+# package). Trigger: `npm version patch && git push --follow-tags`.
+#
+# One-time setup on npmjs.com, by the owner with 2FA (npm requires it done in the
+# browser; a token cannot): planrails → Settings → Trusted Publisher → GitHub
+# Actions, with Repository `vivmagarwal/planrails`, Workflow `publish.yml`,
+# Environment empty, and Allowed actions ticked to include `npm publish`. Until
+# that is saved, the publish step fails with ENEEDAUTH; nothing else is affected.
 name: publish
 on:
   push:
@@ -19,14 +24,9 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version: "22"
           registry-url: "https://registry.npmjs.org"
-          package-manager-cache: false # never cache in a release build
-      - run: npm install -g npm@12 # trusted publishing needs npm 11.5.1 or later; pin the major
-      - run: npm ci
-      - run: npm test
-      - run: npm run selftest
-      # prepublishOnly runs scripts/release-check.mjs before: the tag must match package.json,
-      # the version must not exist yet, the CHANGELOG must have its entry, the tree must be clean.
-      # postpublish runs it after: it waits until the registry serves the version.
+          package-manager-cache: false
+      - run: npm install -g npm@11 # trusted publishing needs npm 11.5.1 or later
+      - run: node --test tools/check-plans.test.mjs bin/planrails.test.mjs
       - run: npm publish

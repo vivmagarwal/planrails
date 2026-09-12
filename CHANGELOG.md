@@ -1,33 +1,64 @@
 # Changelog
 
+## 0.2.0 — 2026-09-12
+
+Rebuilt as a planner prompt and one checker, with a two-command CLI that only
+copies files. Backward compatibility with 0.1.x is intentionally dropped.
+
+Why: 0.1.x was a heavy npm package, and its weight is what made it fragile. It
+wrote a `package.json` and ran `npm install`, so it could not fit pnpm, bun,
+non-Node or monorepo projects; it ran every gate through `bash -c`, so Windows
+could not work; it resolved the project root by a rule the CLI and the installed
+hooks could disagree on; and it carried ~2,500 lines and an 8,842-word guide to
+plan a feature. A review found ten data-loss and silent-failure paths in that
+surface. The planning idea never broke — the machinery around it did.
+
+What it is now, same three rails:
+
+- **`PLANNER.md`** — the prompt an agent reads to plan with you and then execute.
+  Self-contained: the reload line, proof-before-work, evidence-at-close, and the
+  plan and log templates are all in this one file.
+- **`tools/check-plans.mjs`** — a small, dependency-free checker (any OS; Windows
+  in CI). It enforces the one machine-checkable rule: a task that claims to be
+  finished must name a proof and carry pasted evidence. It is built to catch a
+  faked "done": any status that is not an explicit not-done word counts as a
+  claim, and a pipe inside a proof command, a second task table, and a blank line
+  in the table are all handled. `--verify` re-runs each proof (trusted plans
+  only). `tools/check-plans.test.mjs`.
+- **`bin/planrails.mjs`** — a safe CLI. `init` copies `PLANNER.md` and the checker
+  into a project's `.project-management/` and writes nothing else (no
+  `package.json`, no `npm install`, no hooks, no `CLAUDE.md` edits); `check` runs
+  the gate. `bin/planrails.test.mjs`.
+- **`skill/SKILL.md`** — copy to `~/.claude/skills/plan/` for `/plan`.
+- **`examples/weekly-digest/`** — a worked plan the checker validates in CI.
+
+Removed: `src/plan/*` (the 843-line `plan.mjs`, `store`, `schema`, `paths`, …),
+`src/hooks/*` (SessionStart/PreToolUse/Stop/journal hooks, replaced by the reload
+line), the old `init` that wrote `package.json`, `src/issue.mjs`, the `run`
+fresh-session runner, the release/trial/acceptance tooling, and the shipped
+fixtures. The plan format changed from JSON (`state.json`, `gates.json`,
+`rules.json`) to one markdown table a person can read and fix. Publishing stays on
+GitHub Actions trusted publishing (`.github/workflows/publish.yml`).
+
 ## 0.1.3 — 2026-09-12
 
-- Releases are published by GitHub Actions through npm trusted publishing (OIDC) on a `v*` tag push: no npm token anywhere, no browser 2FA prompt per release, provenance attached automatically. `.github/workflows/publish.yml`; the one-time npmjs.com setup and the release steps are in CONTRIBUTING.md § Release. Why: npm's July 2026 changelog retires tokens that bypass 2FA (direct publishing with them ends around January 2027) and points to trusted publishing.
-- The release checks understand CI: on GitHub Actions the run must be on a tag that matches `package.json` (`v0.1.3` ↔ `0.1.3`); the laptop-only "pushed" and "detached" checks are skipped there. `test/release-check.test.mjs`.
-- `package-lock.json` is committed and both workflows install with `npm ci`, so a release build resolves exactly what was tested.
-- Nothing changes in the code a project installs.
+- Releases published by GitHub Actions through npm trusted publishing (OIDC) on a `v*` tag push. `.github/workflows/publish.yml`. (Removed in 0.2.0.)
+- The release checks understand CI. `test/release-check.test.mjs`. (Removed in 0.2.0.)
+- `package-lock.json` committed; both workflows install with `npm ci`.
 
 ## 0.1.2 — 2026-09-12
 
-- `npx planrails update` now also rewrites the plans block in CLAUDE.md from the plans on disk, so a marker or wording written by an older version is replaced on upgrade. `test/claude-md.test.mjs`.
-- Release checks around `npm publish` (`scripts/release-check.mjs`, wired as `prepublishOnly` and `postpublish`): before uploading, refuse a version the registry already has, a missing CHANGELOG entry, a dirty tree or an unpushed HEAD; after uploading, wait until the registry serves the version. Why: a web-authenticated publish is staged and finalizes about a minute later; in that window a second publish fails with E409 and an install with ETARGET, which is how 0.1.1's release went. CONTRIBUTING.md § Release. `test/release-check.test.mjs`.
+- `npx planrails update` also rewrote the plans block in CLAUDE.md from disk.
+- Release checks around `npm publish` (`scripts/release-check.mjs`): refuse a staged/dirty/undocumented publish before, wait for the registry after.
 
 ## 0.1.1 — 2026-09-12
 
-Fixed, found while moving a real project from a vendored copy to the package:
-
-- `npx planrails init` on a project that did not yet hold the package wrote the npx cache's absolute path into every hook command (machine-local, and evicted by npm). Hook commands now name `$CLAUDE_PROJECT_DIR/node_modules/planrails/…` whenever the project holds its own copy, whichever copy runs the installer. `test/hooks-path.test.mjs` reproduces it with a copied package.
-- A CLAUDE.md plans block written by an older copy of the system (a different generator name in its marker) was not recognised, so `init` and `activate` added a second block beside it. Any `<!-- plans:begin` marker now counts as the block. `test/claude-md.test.mjs`.
-- Internal: `npm test` lists the test files by name (`scripts/run-tests.mjs`); Node 20 does not expand the glob the 0.1.0 script used, so its CI jobs failed.
+- `npx planrails init` wrote portable hook commands (`$CLAUDE_PROJECT_DIR/…`) whenever the project held its own copy.
+- Any `<!-- plans:begin` marker counted as the CLAUDE.md block, so `init` and `activate` stopped adding a second one.
+- `npm test` listed test files by name for Node 20.
 
 ## 0.1.0 — 2026-09-12
 
-First release, extracted from the project it was built in after a day of use.
-
-- `planrails init` sets a new or an existing project up, idempotently; `update`, `uninstall`, `doctor`.
-- Plans as files: PLAN.md, state.json, gates.json, rules.json, append-only log / learnings / decisions / gate-runs.
-- A task is done only through `task done`: it runs the gate, records the run, and needs every condition of done answered (C1–C7 by default, more per plan or per task).
-- Gates declare what they do not check and a known-fail case; `gate verify` proves each can fail; a gate edited after verification cannot close a task.
-- Hooks for Claude Code: brief at SessionStart (also after compaction), rules at the tool call, a Stop reminder to log, a subagent brief, a pre-compaction journal. Portable settings via `$CLAUDE_PROJECT_DIR`.
-- `run`: one fresh `claude -p` session per task.
-- `issue`: a prefilled GitHub issue with the environment.
+First release, extracted from the project it was built in. An `init`/`update`/
+`uninstall`/`doctor` CLI, plans as JSON files, `task done` with gates and C1–C7
+conditions, Claude Code hooks, a fresh-session `run`, and an `issue` command.

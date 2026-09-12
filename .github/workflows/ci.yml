@@ -1,3 +1,6 @@
+# Tests the checker on every OS and supported Node. No install: there are no
+# dependencies. Windows is in the matrix on purpose — the old package could not
+# run there, and this proves the rebuild does.
 name: ci
 on:
   push:
@@ -8,15 +11,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        node: [20, 22, 24]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: ["20", "22", "24"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
-      - run: npm ci
-      - run: npm test
-      - run: npm run selftest
-      - run: npm pack --dry-run
+      - run: npm test # both suites: the checker and the CLI
+      - run: node bin/planrails.mjs check --dir examples/weekly-digest # the worked example passes the gate
+      - run: node bin/planrails.mjs init --dir smoke-init # the CLI users run first, on every OS
+      - run: node bin/planrails.mjs check --dir smoke-init
