@@ -83,3 +83,9 @@ Append-only. One entry per landed piece of work, newest at the bottom.
 - files: .project-management/plans/session-claim/PLAN.md, .project-management/plans/session-claim/LOG.md, CLAUDE.md
 - proof: `npm run check` → exit 0, "ℹ pass 74 ℹ fail 0"
 - next: the edodo-video rollout, when the owner says its running task is done — from edodo-video: `npx planrails init` (brings the 0.5.1 files); in `.project-management/plans/composition-to-document/PLAN.md` add `session: <name> · <first 8 of the session id> · since <date>` under `updated:`, change "NOW is three lines" to four, replace the block's step 1 and append the template's last paragraph; under "Active plans" in CLAUDE.md add the held-by sentence; `bun pre-commit.ts`; commit by path. Then the real two-session check: a fresh session told "continue the plan" must stop, report and ask
+
+## 2026-09-13 19:23 — correction to the close entry: the npx smoke check
+- did: the 19:22 entry and T12's cell said `npx planrails@0.5.1 init` wrote the two files; that sentence was composed by the script before the command had returned, and the command had in fact exited 1 and written nothing — run seconds after `npm view` first showed 0.5.1, when the tarball was evidently not yet served. Re-run at 19:23:14: exit 0; `.project-management/planrails/PLANNER.md` and `check-plans.mjs`, both stamped 0.5.1, and `plans/.gitkeep`; nothing else. T12's cell now says both. A Learning records the trap; the same rule is graduated to CLAUDE.md.
+- files: .project-management/plans/session-claim/PLAN.md, .project-management/plans/session-claim/LOG.md, CLAUDE.md
+- proof: `npx -y planrails@0.5.1 init` in an empty folder → exit 0, "  + .project-management/plans/"
+- next: nothing; the edodo-video rollout waits for the owner (steps in the 19:22 entry)
