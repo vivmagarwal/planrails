@@ -84,6 +84,12 @@ Append-only. One entry per landed piece of work, newest at the bottom.
 ## 2026-09-13 14:33 — §5 close, step 2: fresh-context review, findings fixed
 - did: a sub-agent with no chat context checked the work against Done when and Must not change. It confirmed all 11 cases have a test and found one blocker and several should-fixes; all are fixed with a test each: the checker's entry guard compared paths textually and could silently exit 0 through a symlink or /tmp (now real paths, spawned tests, symlink test); a proof cell must be exactly one code span, so `see \`README.md\`` is not a proof and `--verify` cannot execute it; every `exit N` in an evidence cell counts, and `exit status 1` is read; an owner-closed task needs the date with the owner's words; a ```` fence may hold a ``` example; RESUME matches an id written `**T1**`. Retiring a plan now sets `status: done` first, in PLANNER.md, the skill and the changelog. README no longer says init never overwrites; CONTRIBUTING's check description names this repo's plan.
 - files: tools/check-plans.mjs, tools/check-plans.test.mjs, PLANNER.md, skill/SKILL.md, README.md, CONTRIBUTING.md, CHANGELOG.md
-- proof: `npm run check` → see the next entry
+- proof: `npm run check` → exit 0, "ℹ pass 70 ℹ fail 0"
 - next: commit 0.4.0, push main, watch CI; the tag push waits for the owner's go
 - learned / decided: two Learnings added; the review's other nits (RESUME naming an unknown id, `--dir` with no value) are left as is: both fail in the closed direction or are documented
+
+## 2026-09-13 14:37 — T12: 0.4.0 committed and green in CI; the tag waits for the owner
+- did: bumped package.json and both stamps to 0.4.0 together, committed everything as 4bfa4ff on main and pushed. CI run 34748926329 passed all nine jobs: ubuntu, macos and windows on Node 20, 22 and 24, including the repo's own plan through the checker and the spawned-checker tests.
+- files: package.json, PLANNER.md, tools/check-plans.mjs (stamps), and the whole release
+- proof: owner — CI: `gh run view 34748926329` → conclusion success; the publish is the owner's explicit go: `git tag v0.4.0 && git push origin v0.4.0`
+- next: the owner reads PLANNER.md, README.md and CHANGELOG.md (T4, T5, T6, T11), judges T10's run, pushes the tag; then `npx planrails@0.4.0 init` in an empty folder; then set this plan's status to done and backtick its line in CLAUDE.md

@@ -3,9 +3,9 @@
 status: active · opened 2026-09-13 · id: self-sufficient-plan
 
 ## NOW
-RESUME: T12 — release 0.4.0: bump, fresh-context review, commit, push main; the tag push waits for the owner's go
-NEXT: the owner's word on T4 · T5 · T6 · T10 · T11, then retire this plan
-updated: 2026-09-13 14:33 (T12 doing: review fixes in, commit next)
+RESUME: the owner's word on T4 · T5 · T6 · T10 · T11, then the T12 tag push; then §5: set status done, backtick the reload line in CLAUDE.md
+NEXT: nothing after that; the plan retires
+updated: 2026-09-13 14:37 (all code tasks done; five prose tasks and the tag await the owner)
 
 ## How to work this plan
 Read NOW, then Rules and Learnings; do not re-read Context. One task at a time:
@@ -58,7 +58,7 @@ planrails promises a plan that survives a lost session and a "done" that means d
 | T9 | dogfood: `node tools/check-plans.mjs` runs on this repo in `npm run check` and in ci.yml | done | `npm run check` | 2026-09-13 14:15 · exit 0 · "ℹ pass 62 ℹ fail 0" |
 | T10 | fresh-session dry run as described under Done when; paste the transcript's key lines as evidence; if the session skips a step, fix the template block and rerun | review | owner | 2026-09-13 14:20 run: fresh `claude -p` session, 14 turns, both tasks done by the loop with exit 0 evidence, NOW moved, LOG appended, plan retired; checker exit 0. Awaiting the owner's word |
 | T11 | docs, last before release: the skill reads the project copy of PLANNER.md only and says to run init if missing (skill/SKILL.md); README says automatic reload is Claude Code, other agents open the plan by hand; the example's LOG and Learnings agree on the ordering; CHANGELOG 0.4.0 names every behaviour change, the exit-0 rule first | review | owner | 2026-09-13 14:22 written; `npm run check` exit 0. Awaiting the owner's word |
-| T12 | release 0.4.0: bump `package.json`, tag by name, confirm `npx planrails@0.4.0 init` in an empty folder; only on the owner's explicit go | doing | owner | |
+| T12 | release 0.4.0: bump `package.json`, tag by name, confirm `npx planrails@0.4.0 init` in an empty folder; only on the owner's explicit go | review | owner | 2026-09-13 14:37 bumped, committed 4bfa4ff on main, CI green on 9 jobs (run 34748926329); the tag push waits for the owner's go: `git tag v0.4.0 && git push origin v0.4.0`, then `npx planrails@0.4.0 init` in an empty folder |
 
 ## Rules for this plan
 - Every checker change ships with a test that fails without it. Prose changes are proven by the owner.
