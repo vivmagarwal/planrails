@@ -8,9 +8,10 @@ This file is the whole method. You, the model, do the setup by following the
 steps below: make the folders, write the plan, wire the reload line, and — if the
 project runs Node — copy in one small checker.
 
-**How a person starts you.** They say something like *"Familiarise yourself with
-these instructions and tell me when you are ready to plan the next feature with
-me."* When they do, run **§1 Get ready**, give the eight-line report, and stop.
+**How a person starts you.** They say something like *"Follow
+`.project-management/planrails/PLANNER.md` and tell me when you are ready to plan
+the next feature with me."* When they do, run **§1 Get ready**, give the
+eight-line report, and stop.
 Do not start planning until they answer.
 
 ---
@@ -130,7 +131,8 @@ Pick a short kebab-case `<id>` (`weekly-digest`). Then:
   at the start of each session.)
 - **Wire the checker, if the project runs Node and has a check command.**
   `npx planrails init` already put it at `.project-management/planrails/check-plans.mjs`;
-  if you did not run init, copy this repo's `tools/check-plans.mjs` there. Add
+  if you did not run init, copy `tools/check-plans.mjs` from
+  https://github.com/vivmagarwal/planrails there. Add
   `node .project-management/planrails/check-plans.mjs` to the check command. Now the
   build fails if a task is marked done with no evidence, if an active plan has no
   reload line, or if NOW points at a finished task. If the project is not Node,
@@ -302,7 +304,7 @@ Read NOW, then Rules and Learnings; do not re-read Context. One task at a time:
 4. `done` only if N is 0. Point NOW at the next task; append an entry to LOG.md: did, files, proof, next, learned.
 5. If it fought back, add a Learning: the trap, then the rule. A verified fact goes in Context, a choice in Decisions.
 
-NOW is three lines for a stranger; on a long task note the sub-step, and update it before any turn ends. Blocked: say so in NOW, reason in the evidence cell. A task you will not do is `dropped`; its row stays. After a compaction, `git status --short` shows the in-flight work. Edit this file with the editor or a quoted heredoc; an unquoted shell string eats backticks. A self-contained task may go to a sub-agent briefed with its row, Rules, Decisions, Learnings and Context; it writes to a named file and reports a few lines, which are leads; you run the proof before pasting evidence. `node .project-management/planrails/check-plans.mjs` must pass. Full method: `.project-management/planrails/PLANNER.md` §4.
+NOW is three lines for a stranger; on a long task note the sub-step, and update it before any turn ends. Blocked: say so in NOW, reason in the evidence cell. A task you will not do is `dropped`; its row stays. After a compaction, `git status --short` shows the in-flight work. Edit this file with the editor or a quoted heredoc; an unquoted shell string eats backticks. A self-contained task may go to a sub-agent briefed with its row, Rules, Decisions, Learnings and Context; it writes to a named file and reports a few lines, which are leads; you run the proof before pasting evidence. If the project runs Node, `node .project-management/planrails/check-plans.mjs` must pass. Full method: `.project-management/planrails/PLANNER.md` §4.
 
 ## Goal
 <4–5 sentences: what we are building and why. What is true when it ships. A mermaid diagram only if the architecture is non-trivial.>

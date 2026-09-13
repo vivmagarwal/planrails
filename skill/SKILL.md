@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Plan a feature with the user, then execute it, so the work survives a compaction and "done" always means a proof was run. Use when the user asks to plan work, start a plan, or set up a tracker. Writes a PLAN.md the session reloads after compaction, gates each task on pasted evidence, and copies in a checker.
+description: Plan a feature with the user, then execute it, so the work survives a compaction and "done" always means a proof was run. Use when the user asks to plan work, start a plan, or set up a tracker. Writes a PLAN.md the session reloads after compaction, gates each task on pasted evidence, and runs init if the project has no copy of the planner.
 ---
 
 # Plan

@@ -5,7 +5,7 @@ status: active · opened 2026-09-13 · id: self-sufficient-plan
 ## NOW
 RESUME: the owner's word on T4 · T5 · T6 · T10 · T11, then the T12 tag push; then §5: set status done, backtick the reload line in CLAUDE.md
 NEXT: nothing after that; the plan retires
-updated: 2026-09-13 15:06 (field test done; the tag waits for the owner)
+updated: 2026-09-13 15:17 (field and docs tests done; the tag waits for the owner)
 
 ## How to work this plan
 Read NOW, then Rules and Learnings; do not re-read Context. One task at a time:
@@ -94,6 +94,7 @@ planrails promises a plan that survives a lost session and a "done" that means d
 - The checker's entry guard compared paths textually, so through a symlink or `/tmp` on macOS the gate printed nothing and exited 0, since 0.2.0 → a gate's own entry point is tested as a spawned command, through a symlink too; compare real paths (fresh-context review, 2026-09-13)
 - Backticking a plan's reload line while its header still says `status: active` makes the new reload check fail the build → retire by setting `status: done` first, then backtick; the method and the skill now say so (fresh-context review)
 - Two field sessions typed a timestamp from memory and had to restamp, although the block said "time from `date`" → the block now says every stamp comes from `date` run at that moment, never typed from memory (field test, 2026-09-13)
+- A plan with no `status:` line skipped the reload and NOW rules, because "active" was read as the presence of a word → a gate reads absence as the risky case: active unless the header says done or paused (newcomer docs test, 2026-09-13)
 
 ## Context (read during planning — do not re-read)
 - PLANNER.md — §4 loop 128-165; template 215-290; HTML comments T4 replaces at 233, 243-245, 253, 262-266

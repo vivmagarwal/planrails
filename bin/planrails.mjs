@@ -29,7 +29,7 @@ const HELP = `planrails ${version()} — a planner prompt and one checker.
   npx planrails check [--dir DIR] [--verify] check the project's plans
   planrails --version | --help
 
-After init, tell your agent:  Follow .project-management/planrails/PLANNER.md and plan <the feature> with me.
+After init, tell your agent:  Follow .project-management/planrails/PLANNER.md and tell me when you are ready to plan <the feature> with me.
 Add to the command you run before every commit:  node .project-management/planrails/check-plans.mjs
 Full guide: https://github.com/vivmagarwal/planrails#readme`;
 
@@ -82,7 +82,7 @@ function init(args) {
 
   console.log(`
 Next:
-  1. Tell your agent:  Follow .project-management/planrails/PLANNER.md and plan <the feature> with me.
+  1. Tell your agent:  Follow .project-management/planrails/PLANNER.md and tell me when you are ready to plan <the feature> with me.
      (Or, in Claude Code, use /plan if you installed the skill.)
   2. Add to the command you run before every commit:
        node .project-management/planrails/check-plans.mjs

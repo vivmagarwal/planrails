@@ -9,8 +9,9 @@ that emails each user a weekly digest of the top posts.
   — the append-only history.
 
 T1 is done, so it carries pasted evidence with its exit code. T2 is in progress,
-and NOW points at it. The checker passes this plan, because every task that is
-marked done has a proof and exit 0 evidence, and NOW names an open task:
+and NOW points at it. `CLAUDE.md` carries the reload line. The checker passes
+this plan on all three rails: every task marked done has a proof and exit 0
+evidence, NOW names an open task, and the active plan is reloaded:
 
 ```bash
 node ../../tools/check-plans.mjs --root .

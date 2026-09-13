@@ -99,3 +99,9 @@ Append-only. One entry per landed piece of work, newest at the bottom.
 - files: PLANNER.md, examples/weekly-digest/.project-management/plans/weekly-digest/PLAN.md, .project-management/plans/self-sufficient-plan/PLAN.md
 - proof: `npm run check` → exit 0, "ℹ pass 70 ℹ fail 0"
 - next: the owner's word on T4, T5, T6, T10, T11 and the tag push
+
+## 2026-09-13 15:17 — docs test: a newcomer followed the README literally
+- did: a fresh-context agent ran every command and claim in README.md, the CLI's `--help` and `init` output, the example's own instruction, CONTRIBUTING's commands in a clone-like copy, and three CHANGELOG claims, in a scratch folder under ~/Work/temporary_tests/doc-test. Every section passed functionally; nine inaccuracies were found and fixed: the README excerpt now carries the status line and the How-to block and matches the example; the example gained a CLAUDE.md with the reload line, so it exercises all three rails; the README, the CLI's next steps and PLANNER.md use one start sentence; the template says the checker must pass "if the project runs Node"; the by-hand copy names the GitHub URL; the checker block documents `--root`; the `.gitkeep` is named; the skill's description no longer claims to copy a checker. One finding was a checker gap: a plan with no status line was exempt from two rails; it now counts as active. The tarball was rebuilt so it carries the final text, and the three demo projects were refreshed from it.
+- files: tools/check-plans.mjs, tools/check-plans.test.mjs, README.md, PLANNER.md, CHANGELOG.md, bin/planrails.mjs, skill/SKILL.md, examples/weekly-digest/CLAUDE.md, examples/weekly-digest/README.md, examples/weekly-digest/.project-management/plans/weekly-digest/PLAN.md
+- proof: `npm run check` → exit 0, "ℹ pass 71 ℹ fail 0"
+- next: the owner's word on T4, T5, T6, T10, T11 and the tag push

@@ -44,7 +44,7 @@ your plans. What lands:
   planrails/
     PLANNER.md        the prompt your agent follows to plan and execute
     check-plans.mjs   the checker (the one machine-enforced rail)
-  plans/              your plans will live here, one folder each
+  plans/              your plans live here, one folder each (a .gitkeep holds the folder)
 ```
 
 Then, two steps:
@@ -106,19 +106,28 @@ session follows even if it never saw the planner prompt — and the plan's memor
 the rules to keep, the decisions made, and the **learnings** (a mistake, written
 as the rule that avoids it). Because the reload line brings `PLAN.md` back at the
 start of every session, a lesson from one chat is read by the next one before it
-repeats the struggle. The top of `PLAN.md` is what a fresh session reads first:
+repeats the struggle. The top of `PLAN.md` is what a fresh session reads first. Abridged from
+[`examples/weekly-digest/`](examples/weekly-digest), which also shows the
+`CLAUDE.md` line that reloads it:
 
 ```
+# Weekly digest email — plan
+
+status: active · opened 2026-09-12 · id: weekly-digest
+
 ## NOW
-RESUME: T2 — render the digest through lib/email (lib/digest/render.ts)
-NEXT: T3 schedule · T4 docs
+RESUME: T2 — render the digest through the email seam (lib/digest/render.ts)
+NEXT: T3 schedule the Monday send · T4 docs
 updated: 2026-09-12 14:20
+
+## How to work this plan
+(the loop a session follows: set doing, run the proof, paste exit N, done on 0, update NOW, log it)
 
 ## Tasks
 | id | task | status | proof | evidence |
 |----|------|--------|-------|----------|
-| T1 | the digest query (lib/digest/query.ts) | done  | `npx vitest run tests/digest.test.ts` | 2026-09-12 14:05 · exit 0 · "6 passed" |
-| T2 | render through the email seam       | doing | `npx vitest run tests/render.test.ts` | |
+| T1 | the digest query (lib/digest/query.ts) | done  | `npx vitest run tests/digest/query.test.ts` | 2026-09-12 14:05 · exit 0 · "6 passed" |
+| T2 | render through the email seam       | doing | `npx vitest run tests/digest/render.test.ts` | |
 ```
 
 The full method — how the agent gets ready, interviews you, writes the plan,
@@ -130,9 +139,10 @@ is in [`PLANNER.md`](PLANNER.md). A complete worked plan is in
 ## The checker
 
 ```bash
-node .project-management/planrails/check-plans.mjs          # done tasks must name a proof and carry evidence
-node .project-management/planrails/check-plans.mjs --verify # also re-run each done task's proof, expect exit 0
-npx planrails check                                         # the same, using the latest published checker
+node .project-management/planrails/check-plans.mjs            # done needs a proof and exit 0 evidence; the plan reloads; NOW is current
+node .project-management/planrails/check-plans.mjs --verify   # also re-run each done task's proof, expect exit 0
+node .project-management/planrails/check-plans.mjs --root DIR # check another folder (--dir works too)
+npx planrails check                                           # the same, with the published package's checker, which may be newer than your copy
 ```
 
 No dependencies. Node 20+, any OS (Windows included). The default is a fast

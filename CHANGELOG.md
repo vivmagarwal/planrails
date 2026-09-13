@@ -29,8 +29,9 @@ nothing but its two files.
   fences, and no such line may point at a plan that does not exist. An active
   plan's `RESUME` line must name a task that is still open, so a stale NOW is
   caught. Both are skipped for a retired plan, so retiring a plan now means
-  setting `status: done` and then backticking its line; the reload check is
-  skipped when there is no `CLAUDE.md`.
+  setting `status: done` and then backticking its line; a plan with no status
+  line counts as active, the safe direction; the reload check is skipped when
+  there is no `CLAUDE.md`.
 - **`--verify` has a timeout** (10 minutes per proof) and reports the last line a
   failing proof printed, instead of hanging or saying nothing.
 - **The checker can no longer silently exit 0.** Its entry guard compared paths
@@ -65,8 +66,10 @@ nothing but its two files.
 - The `/plan` skill reads the project's own copy of `PLANNER.md` and says to run
   `init` if it is missing, so there is one copy per project, not three. The README
   says plainly that automatic reload is Claude Code's; other agents open the plan
-  by hand. The worked example carries the new block, and its log agrees with its
-  learnings. This repo's own plan for this release lives in
+  by hand. The worked example carries the new block and a `CLAUDE.md` with the
+  reload line, so it exercises all three rails, and its log agrees with its
+  learnings. The README, the CLI's next steps and `PLANNER.md` use one start
+  sentence, the one that makes the agent report ready and wait. This repo's own plan for this release lives in
   `.project-management/plans/self-sufficient-plan/` and is gated by the checker it
   ships, in CI. 70 tests.
 

@@ -12,7 +12,8 @@
  *    `@.project-management/plans/<id>/PLAN.md` on its own line, and no such line
  *    may point at a plan that does not exist. (Skipped when there is no CLAUDE.md.)
  *  - NOW must be current: the RESUME line of an active plan may not name only
- *    finished tasks. A retired plan says `status: done` and is exempt from both.
+ *    finished tasks. A retired plan says `status: done` (or paused) and is exempt
+ *    from both; a plan with no status line counts as active.
  *
  * The rule is biased toward catching a faked "done": a task counts as a
  * completion claim UNLESS its status is blank or an explicit not-done word
@@ -237,9 +238,15 @@ export function checkPlan({ id, text, verify = false, run = null }) {
   return problems;
 }
 
-/** A plan whose header says `status: active`. Retired plans are not held to the reload or NOW rules. */
+/**
+ * Active unless the header says otherwise: `status: done`, `paused`, or another
+ * finished word exempts a plan from the reload and NOW rules. A plan with no
+ * status line counts as active — the safe direction for a gate.
+ */
+const NOT_ACTIVE = new Set(["done", "paused", "retired", "closed", "shipped", "finished", "complete", "completed", "archived", "dropped", "cancelled", "canceled", "abandoned", "superseded", "onhold", "hold"]);
 export function isActive(text) {
-  return /^status:\s*active\b/im.test(text);
+  const m = text.match(/^status:\s*([^\s·|]+)/im);
+  return !(m && NOT_ACTIVE.has(norm(m[1])));
 }
 /** The task ids the RESUME line names, out of the plan's own ids (T1 does not match inside T12). */
 function resumeIds(text, ids) {

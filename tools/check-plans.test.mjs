@@ -198,6 +198,14 @@ describe("checkPlan — NOW is current (0.4.0)", () => {
     assert.deepEqual(checkPlan({ id: "p", text: plan("T1 landed; T2 — do y", [T1done, "| T2 | y | todo | `c` | |"]) }), []);
     assert.deepEqual(checkPlan({ id: "p", text: plan("T12 — the last one", [T1done, "| T12 | z | doing | `c` | |"]) }), [], "T1 must not match inside T12");
   });
+  it("a plan with NO status line counts as active, so the NOW rule applies (fail closed)", () => {
+    const text = "# P — plan\n\n## NOW\nRESUME: T1 — x\n\n" + table([T1done, "| T2 | y | todo | `c` | |"]);
+    assert.match(checkPlan({ id: "p", text })[0], /NOW is stale/);
+    assert.equal(isActive(text), true);
+    assert.equal(isActive("status: complete · opened 2026-09-13 · id: p\n"), false, "a finished word exempts");
+    assert.equal(isActive("status: paused\n"), false);
+    assert.equal(isActive("status: wip\n"), true, "an unknown word stays active");
+  });
   it("skips the NOW rule for a retired plan, and when there is no RESUME line", () => {
     const retired = plan("T1 — finish x", [T1done]).replace("status: active", "status: done");
     assert.deepEqual(checkPlan({ id: "p", text: retired }), []);
