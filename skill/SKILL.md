@@ -1,9 +1,9 @@
 ---
-name: plan
+name: planrails
 description: Plan a feature with the user, then execute it, so the work survives a compaction and "done" always means a proof was run. Use when the user asks to plan work, start a plan, or set up a tracker. Writes a PLAN.md the session reloads after compaction, gates each task on pasted evidence, and runs init if the project has no copy of the planner.
 ---
 
-# Plan
+# planrails
 
 Follow the planner method in **`.project-management/planrails/PLANNER.md`**, the
 project's own copy. Read it and do exactly what it says; do not summarise it from

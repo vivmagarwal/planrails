@@ -92,11 +92,12 @@ The checker needs Node to run. If your project has no Node at all, skip it — t
 plan still works, and your agent enforces the gate the way `PLANNER.md` says. The
 planner method does not depend on any language.
 
-### As a `/plan` command in Claude Code
+### As a `/planrails` command in Claude Code
 
-Copy [`skill/`](skill) to `~/.claude/skills/plan/`. Then `/plan` starts the same
-flow in any project that has run `npx planrails init` — the skill reads the
-project's own copy of `PLANNER.md`, so every project follows the version it has.
+Copy [`skill/`](skill) to `~/.claude/skills/planrails/`. Then `/planrails` starts
+the same flow in any project that has run `npx planrails init` — the skill reads
+the project's own copy of `PLANNER.md`, so every project follows the version it
+has. (It is not called `/plan`, because Claude Code has a `/plan` of its own.)
 
 ## How a plan works
 

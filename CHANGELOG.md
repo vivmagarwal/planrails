@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1 — 2026-09-13
+
+- The Claude Code skill is `/planrails`, not `/plan`, because Claude Code has a
+  `/plan` of its own. Install it at `~/.claude/skills/planrails/`; the README and
+  the sentence `init` prints say so. Nothing else changed.
+
 ## 0.4.0 — 2026-09-13
 
 A review of 0.3.0 against a real multi-session plan, the Claude Code docs, and

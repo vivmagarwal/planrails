@@ -83,7 +83,7 @@ function init(args) {
   console.log(`
 Next:
   1. Tell your agent:  Follow .project-management/planrails/PLANNER.md and tell me when you are ready to plan <the feature> with me.
-     (Or, in Claude Code, use /plan if you installed the skill.)
+     (Or, in Claude Code, use /planrails if you installed the skill.)
   2. Add to the command you run before every commit:
        node .project-management/planrails/check-plans.mjs
   3. When the agent writes a plan, it adds one line to your CLAUDE.md so the plan
