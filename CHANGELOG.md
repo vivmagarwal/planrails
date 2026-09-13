@@ -24,7 +24,8 @@ worked example, are closed here.
   close. The checker now fails an active plan with no RESUME line, the one hole a
   renamed line opened in the NOW rule.
 - **The block is shorter and the rule is a list.** Its session paragraph fell from
-  197 words to a five-line list; the whole block is under 400 words.
+  197 words to a five-line list; the whole block is about 480 words, with the owner
+  and close clauses added.
 - **The worked example carries the template's block, byte for byte**, pinned by a
   test. It had shipped the 0.5.0 paragraph that matched holders by name.
 - **`init` points out plans that predate 0.5**: an active plan with no `session:`
