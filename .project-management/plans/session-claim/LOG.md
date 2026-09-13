@@ -38,3 +38,15 @@ Append-only. One entry per landed piece of work, newest at the bottom.
 - files: skill/SKILL.md, CHANGELOG.md, package.json, PLANNER.md (stamp), tools/check-plans.mjs (stamp)
 - proof: `node --test bin/planrails.test.mjs` → exit 0, "ℹ pass 13 ℹ fail 0"
 - next: commit and push main; the tag on the owner's go; then `npx planrails@0.5.0 init` in an empty folder
+
+## 2026-09-13 18:34 — 0.5.0 committed as 6b9b210 and pushed to main
+- did: one commit, staged by path; CI runs the two suites, this repo's plans and the example on nine OS/Node jobs. The tag, which publishes, waits for the owner's explicit go.
+- files: the whole release
+- proof: `npm run check` → exit 0, "ℹ pass 73 ℹ fail 0" before the commit
+- next: the owner reads PLANNER.md, README.md, CHANGELOG.md and the field-test results (T3, T4, T6); the tag; then T8 in edodo-video once `edodo-video-9a` is stopped
+
+## 2026-09-13 18:42 — 0.5.0 published; T3, T4, T6 closed on the owner's word; T8 and T9 blocked on it
+- did: CI for 6b9b210 green on all nine jobs; tag v0.5.0 pushed by name; the trusted-publishing run succeeded; npm serves 0.5.0 about 100 s later; `npx planrails@0.5.0 init` in an empty folder wrote `.project-management/planrails/PLANNER.md` and `check-plans.mjs`, both stamped 0.5.0, and `plans/.gitkeep`, nothing else. The owner's "Ship it — tag v0.5.0" closes T3, T4 and T6. The owner's other answer blocks T8 and T9: edodo-video stays untouched until the task in `edodo-video-9a` is 100% done; the plan stays active until then.
+- files: .project-management/plans/session-claim/PLAN.md, .project-management/plans/session-claim/LOG.md
+- proof: `npm run check` → exit 0, "ℹ pass 73 ℹ fail 0" (before the tag; nothing changed since)
+- next: a fresh-context review of the shipped work against Done when, now rather than at close, so a defect in published prose is found early; then wait for the owner's word on edodo-video
