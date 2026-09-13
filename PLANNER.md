@@ -298,7 +298,7 @@ updated: <YYYY-MM-DD HH:MM, from `date`>
 Read NOW, then Rules and Learnings; do not re-read Context. One task at a time:
 1. Set it `doing`; point NOW at it.
 2. Do the work: fix causes, not symptoms; the simplest change that works end to end.
-3. Run the proof now. Paste `YYYY-MM-DD HH:MM · exit N · "last line"` into evidence, time from `date`.
+3. Run the proof now. Paste `YYYY-MM-DD HH:MM · exit N · "last line"` into evidence. Every stamp comes from `date` run at that moment, never typed from memory.
 4. `done` only if N is 0. Point NOW at the next task; append an entry to LOG.md: did, files, proof, next, learned.
 5. If it fought back, add a Learning: the trap, then the rule. A verified fact goes in Context, a choice in Decisions.
 
