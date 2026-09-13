@@ -206,11 +206,14 @@ describe("checkPlan — NOW is current (0.4.0)", () => {
     assert.equal(isActive("status: paused\n"), false);
     assert.equal(isActive("status: wip\n"), true, "an unknown word stays active");
   });
-  it("skips the NOW rule for a retired plan, and when there is no RESUME line", () => {
+  it("skips the NOW rule for a retired plan; an ACTIVE plan without a RESUME line is a problem (0.5.2)", () => {
     const retired = plan("T1 — finish x", [T1done]).replace("status: active", "status: done");
     assert.deepEqual(checkPlan({ id: "p", text: retired }), []);
     assert.equal(isActive(retired), false);
-    assert.deepEqual(checkPlan({ id: "p", text: "status: active\n\n" + table([T1done]) }), []);
+    const noResume = checkPlan({ id: "p", text: "status: active\n\n## NOW\nDONE: everything\nNEXT: none\n\n" + table([T1done]) });
+    assert.equal(noResume.length, 1);
+    assert.match(noResume[0], /NOW has no RESUME line/);
+    assert.deepEqual(checkPlan({ id: "p", text: retired.replace("RESUME:", "DONE:") }), [], "a retired plan may say what it likes");
   });
 });
 
@@ -276,6 +279,15 @@ describe("the PLAN.md template in PLANNER.md — case 11 (0.4.0): template and p
   });
   it("carries the block a fresh session works from", () => {
     for (const must of ["## How to work this plan", "## NOW", "RESUME:", "exit N", "`date`", "LOG.md", "Learnings", "check-plans.mjs"]) assert.ok(template.includes(must), must);
+  });
+  it("the worked example carries the template's block byte for byte (0.5.2)", () => {
+    const ex = readFileSync(new URL("../examples/weekly-digest/.project-management/plans/weekly-digest/PLAN.md", import.meta.url), "utf8");
+    const blockOf = (s) => s.slice(s.indexOf("## How to work this plan"), s.indexOf("## Goal")).trim();
+    assert.equal(blockOf(ex), blockOf(template), "examples/weekly-digest must ship the template's block, not an older one");
+  });
+  it("the block covers owner proofs, the close, and the four NOW lines (0.5.2)", () => {
+    const block = template.slice(template.indexOf("## How to work this plan"), template.indexOf("## Goal"));
+    for (const must of ["proof of `owner`", "never by you", "§5", "`status: done`", "`session: none`", "exactly these four lines", "Get-Date", "no plan's `session:` line"]) assert.ok(block.includes(must), `the block says: ${must}`);
   });
   it("names the session in NOW, and the block itself carries the check (0.5.1)", () => {
     const now = template.slice(template.indexOf("## NOW"), template.indexOf("## How to work this plan"));

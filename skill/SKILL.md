@@ -30,9 +30,11 @@ The short version, so you know where you are going:
    names you, but names change) and `git status --short`; if another live
    session holds it, report and ask before writing anything — even when the user
    asked you to continue. Several reloaded plans: work only the one the user assigned in this
-   session, and say which. Then do it, run the proof now, paste the exit code
-   and last line into the evidence cell (exit 0, or it is not done), then mark it
-   done and update NOW. A self-contained task can go to a sub-agent briefed with
+   session, and say which. An unheld plan you were assigned is yours to claim,
+   unless its files are dirty or a busy peer holds no plan. Then do it, run the
+   proof now, paste the exit code and last line into the evidence cell (exit 0,
+   or it is not done), then mark it done and update NOW. A proof of `owner` is
+   closed only by the user's words; leave it open. A self-contained task can go to a sub-agent briefed with
    its row and the plan's Rules, Decisions, Learnings and Context; run the proof
    yourself before pasting evidence. When a task fights back and you find the
    fix, record it in PLAN.md § Learnings so the next session does not repeat the

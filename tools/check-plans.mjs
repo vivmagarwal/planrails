@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// planrails 0.5.1
+// planrails 0.5.2
 /**
  * check-plans — the machine-checked rails of the planner.
  *
@@ -11,8 +11,8 @@
  *  - an active plan must reload: when the project has a CLAUDE.md, it must carry
  *    `@.project-management/plans/<id>/PLAN.md` on its own line, and no such line
  *    may point at a plan that does not exist. (Skipped when there is no CLAUDE.md.)
- *  - NOW must be current: the RESUME line of an active plan may not name only
- *    finished tasks. A retired plan says `status: done` (or paused) and is exempt
+ *  - NOW must be current: an active plan keeps its RESUME line, and that line
+ *    may not name only finished tasks. A retired plan says `status: done` (or paused) and is exempt
  *    from both; a plan with no status line counts as active.
  *
  * The rule is biased toward catching a faked "done": a task counts as a
@@ -229,8 +229,10 @@ export function checkPlan({ id, text, verify = false, run = null }) {
       if (code !== 0) problems.push(`${id} ${t.id}: proof re-run failed — \`${cmd}\` exited ${code}${r.last ? ` — ${r.last}` : ""}`);
     }
   }
-  // NOW must point somewhere live: a RESUME line that names only finished tasks is stale.
+  // NOW must point somewhere live: an active plan keeps its RESUME line, and a
+  // RESUME line that names only finished tasks is stale.
   if (isActive(text)) {
+    if (/^#{1,6}\s+NOW\b/m.test(text) && !/^\s*RESUME:/m.test(text)) problems.push(`${id}: NOW has no RESUME line — an active plan keeps RESUME, NEXT, updated and session; a finished plan says status: done`);
     const named = resumeIds(text, tasks.map((t) => t.id).filter(Boolean));
     if (named.length && named.every((n) => tasks.some((t) => t.id === n && isCompletionClaim(t.status))))
       problems.push(`${id}: NOW is stale — RESUME names ${named.map((n) => n.replace(/[`*_]/g, "")).join(", ")}, which ${named.length === 1 ? "is" : "are all"} done; point it at the next open task, or set the plan's status to done`);

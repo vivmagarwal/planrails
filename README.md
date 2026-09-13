@@ -192,11 +192,15 @@ directory, so a second session can read the plan and start the task the first on
 is on. A plan's NOW names the session working it
 (`session: app-3f · 7c1d2e9a · since 2026-09-12 14:05`), and the plan's block tells
 every session, before it sets a task `doing`, to re-read that line, list the live
-sessions (`claude agents --json`; `ListAgents` inside Claude Code) and run
-`git status --short`, and to stop and ask when another live session holds the plan
-— even when you asked it to continue, because you can forget which window owns
-it. One plan per session, one session per plan; the other reloaded plans are
-context. The claim is a lead, not a lock: a line left by a closed terminal blocks
+sessions (`claude agents --json`, matching the line's id; `ListAgents` inside
+Claude Code names sessions but shows no id) and run `git status --short`, and to
+stop and ask when another live session holds the plan — even when you asked it to
+continue, because you can forget which window owns it. One plan per session, one
+session per plan; the other reloaded plans are context. A session assigned an
+unheld plan claims it and goes on, unless that plan's files are dirty or a busy
+peer holds no plan, so two sessions can work two plans side by side. A plan
+written before 0.5 has no `session:` line; `init` points it out, and the
+changelog says what to add by hand. The claim is a lead, not a lock: a line left by a closed terminal blocks
 nobody, and the checker ignores the line. Field-tested with headless sessions: a
 second session told "Continue the active plan." stopped and asked while the first
 was live — by its id, after the first had been renamed — took over when it was

@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.5.2 — 2026-09-13
+
+A second field test of 0.5.1, four scratch projects and seven fresh sessions, and
+a newcomer's pass over the docs. The published behaviour held: a stale claim was
+taken over by id, a live holder stopped a second session, a session assigned one
+of two plans touched only that one. Four gaps in the plan's block, and one in the
+worked example, are closed here.
+
+- **Two sessions can work two plans in one checkout.** The block's rule for an
+  unheld plan (`session: none`, or no line) said stop whenever any session in the
+  checkout was busy or any plan file was dirty, so the second of two sessions
+  always had to ask. Now a session assigned an unheld plan writes its line and
+  goes on, unless *that plan's* files are dirty or a busy session in the checkout
+  has its id on no plan's `session:` line. The same-plan rule is unchanged: a
+  live holder, matched by id, stops you.
+- **An `owner` proof is closed only by the person.** A field session closed an
+  owner task with a check of its own and an invented exit code; the checker cannot
+  see that. The block and §4 now say: leave the row open, say so in RESUME.
+- **NOW keeps its shape, and the block says how a plan closes.** A session
+  renamed RESUME to DONE, wrote the `session:` line twice and left a finished plan
+  active. The block says NOW is exactly the four lines, and points at §5 for the
+  close. The checker now fails an active plan with no RESUME line, the one hole a
+  renamed line opened in the NOW rule.
+- **The block is shorter and the rule is a list.** Its session paragraph fell from
+  197 words to a five-line list; the whole block is under 400 words.
+- **The worked example carries the template's block, byte for byte**, pinned by a
+  test. It had shipped the 0.5.0 paragraph that matched holders by name.
+- **`init` points out plans that predate 0.5**: an active plan with no `session:`
+  line is named, with the by-hand steps from 0.5.0. `init` still never touches a
+  plan.
+- Timestamps come from the shell clock, `date` or `Get-Date` on Windows, where
+  `date` prompts. The README no longer suggests `ListAgents` can do the id match.
+  The 0.4.0 entry no longer overstates the stray-backtick fix. 77 tests.
+
 ## 0.5.1 — 2026-09-13
 
 A fresh-context review of 0.5.0, run the same day, found the block — the one copy
@@ -103,8 +137,8 @@ nothing but its two files.
   Re-run the proof and paste its exit code.
 - **The checker fails closed on a row it cannot read.** The cell splitter follows
   the CommonMark rule for backtick runs, so a stray backtick or three backticks in
-  prose no longer shift the columns; a row whose cell count still differs from the
-  header's is a problem instead of a silent pass. A task table inside a code fence
+  prose are read the way CommonMark reads them; a row whose cell count still
+  differs from the header's is a problem instead of a silent pass. A task table inside a code fence
   is ignored, a table right after the task table with no heading between is no
   longer read as tasks, and `**id**` in a header is read.
 - **Two integrity checks keep the reload honest.** When the project has a

@@ -10,15 +10,20 @@ session: app-3f · 7c1d2e9a · since 2026-09-12 14:05
 
 ## How to work this plan
 Read NOW, then Rules and Learnings; do not re-read Context. One task at a time:
-1. Set it `doing`; point NOW at it.
+1. Check who holds the plan (below); set it `doing`; point NOW at it; put your session on its `session:` line.
 2. Do the work: fix causes, not symptoms; the simplest change that works end to end.
-3. Run the proof now. Paste `YYYY-MM-DD HH:MM · exit N · "last line"` into evidence. Every stamp comes from `date` run at that moment, never typed from memory.
-4. `done` only if N is 0. Point NOW at the next task; append an entry to LOG.md: did, files, proof, next, learned.
+3. Run the proof now. Paste `YYYY-MM-DD HH:MM · exit N · "last line"` into evidence. Every stamp comes from the shell clock (`date`; on Windows `Get-Date`), never typed from memory.
+4. `done` only if N is 0. A proof of `owner` is closed only by the person's words with the date, never by you: leave the row open and say so in RESUME. Point NOW at the next task; append an entry to LOG.md: did, files, proof, next, learned.
 5. If it fought back, add a Learning: the trap, then the rule. A verified fact goes in Context, a choice in Decisions.
 
-NOW is four lines for a stranger; on a long task note the sub-step, and update it before any turn ends. Blocked: say so in NOW, reason in the evidence cell. A task you will not do is `dropped`; its row stays. After a compaction, `git status --short` shows the in-flight work. Edit this file with the editor or a quoted heredoc; an unquoted shell string eats backticks. A self-contained task may go to a sub-agent briefed with its row, Rules, Decisions, Learnings and Context; it writes to a named file and reports a few lines, which are leads; you run the proof before pasting evidence. If the project runs Node, `node .project-management/planrails/check-plans.mjs` must pass. Full method: `.project-management/planrails/PLANNER.md` §4.
+NOW is exactly these four lines, RESUME, NEXT, updated and session, written for a stranger; on a long task note the sub-step in RESUME, and update NOW before any turn ends. Blocked: say so in RESUME, reason in the evidence cell. A task you will not do is `dropped`; its row stays. After a compaction, `git status --short` shows the in-flight work. Edit this file with the editor or a quoted heredoc; an unquoted shell string eats backticks. A self-contained task may go to a sub-agent briefed with its row, Rules, Decisions, Learnings and Context; it writes to a named file and reports a few lines, which are leads; you run the proof before pasting evidence. If the project runs Node, `node .project-management/planrails/check-plans.mjs` must pass. When every task is done, close by PLANNER.md §5: proofs re-run, a fresh-context review, `status: done`, `session: none`, the reload line in backticks. Full method: `.project-management/planrails/PLANNER.md` §4.
 
-The `session:` line names the one session working this plan. Before any task goes `doing`, even when asked to continue: re-read NOW from disk, run `claude agents --json` (in Claude Code, `ListAgents` names you) and `git status --short`. If the line names a live session that is not you, or says `none` while another session in this checkout is busy or plan files are dirty: stop, report what you found, and ask before writing to the plan, its files, or a commit. A named session the listing lacks is stale: say so, take over. Other reloaded plans are context; work only the one assigned in this session, and say which.
+Who holds the plan. `session:` names the one session working it: name · first 8 characters of its session id · since. Match by id, never by name. Before any task goes `doing`, even when asked to continue: re-read NOW from disk, run `claude agents --json` (your own id is `$CLAUDE_CODE_SESSION_ID`) and `git status --short`, then:
+- the id is yours: go on.
+- the id is live and not yours: stop, report what you found, ask; write nothing.
+- the id is not listed: stale if no other session in this checkout is live; say so, take over, write your line. Else stop and ask.
+- `none`, or no line: write your line and go on, unless this plan's files are dirty or a busy session in this checkout has its id on no plan's `session:` line; then stop and ask.
+Work only the plan assigned in this session; other reloaded plans are context. Without a `claude` command, git is the record: pull first, and ask about a fresh `doing` row.
 
 ## Goal
 Every user gets one email each Monday with the five most-read posts of the past

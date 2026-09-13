@@ -15,10 +15,10 @@
  *
  *   planrails --version | --help
  */
-import { readFileSync, copyFileSync, mkdirSync, existsSync, writeFileSync, realpathSync } from "node:fs";
+import { readFileSync, copyFileSync, mkdirSync, existsSync, writeFileSync, realpathSync, readdirSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { checkPlans } from "../tools/check-plans.mjs";
+import { checkPlans, isActive } from "../tools/check-plans.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const version = () => JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version;
@@ -77,6 +77,14 @@ function init(args) {
   const keep = join(plans, ".gitkeep");
   if (!existsSync(keep)) { writeFileSync(keep, ""); console.log("  + .project-management/plans/"); }
   else console.log("  = .project-management/plans/ (your plans are never touched)");
+  // A plan written before 0.5 has no session: line and an older block. init never
+  // touches a plan, so say which ones need the by-hand update from CHANGELOG 0.5.0.
+  for (const name of existsSync(plans) ? readdirSync(plans) : []) {
+    const pf = join(plans, name, "PLAN.md");
+    if (!existsSync(pf)) continue;
+    const text = readFileSync(pf, "utf8");
+    if (isActive(text) && !/^session:/m.test(text)) console.log(`  ! plan ${name} predates 0.5: add NOW's session: line and the block's "Who holds the plan" paragraph by hand (CHANGELOG 0.5.0); until then a second session cannot tell who holds it`);
+  }
   const loose = ["PLANNER.md", "check-plans.mjs"].filter((f) => existsSync(join(pm, f)));
   if (loose.length) console.log(`  ! 0.2.x files at .project-management/ root: ${loose.join(", ")} — the copies now live in planrails/; delete the loose ones and point your check command at .project-management/planrails/check-plans.mjs`);
 

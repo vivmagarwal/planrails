@@ -91,6 +91,15 @@ describe("planrails init", () => {
     assert.equal(readFileSync(join(dir, "CLAUDE.md"), "utf8"), "# P\n\n@.project-management/plans/keep-me/PLAN.md\n", "CLAUDE.md byte-identical");
     assert.match(r.stdout, /your plans are never touched/);
   });
+  it("points out an active plan that predates 0.5 (no session: line), and stays quiet for one that has it (0.5.2)", () => {
+    const mk = (name, sessionLine) => { const d = join(dir, ".project-management", "plans", name); mkdirSync(d, { recursive: true }); writeFileSync(join(d, "PLAN.md"), `# ${name} — plan\n\nstatus: active · opened 2026-09-01 · id: ${name}\n\n## NOW\nRESUME: T1\nNEXT: —\nupdated: 2026-09-01 10:00\n${sessionLine}\n## Tasks\n| id | task | status | proof | evidence |\n|--|--|--|--|--|\n| T1 | x | todo | \`c\` | |\n`); return d; };
+    const old = mk("old-plan", ""), fresh = mk("fresh-plan", "session: none\n");
+    const r = run(["init", "--dir", dir]);
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /! plan old-plan predates 0\.5: add NOW's session: line/);
+    assert.doesNotMatch(r.stdout, /! plan fresh-plan/, "a plan with a session: line is not flagged");
+    rmSync(old, { recursive: true, force: true }); rmSync(fresh, { recursive: true, force: true });
+  });
   it("points out 0.2.x files left at the .project-management/ root, without deleting them", () => {
     writeFileSync(join(dir, ".project-management", "check-plans.mjs"), "// 0.2.x copy");
     const r = run(["init", "--dir", dir]);
