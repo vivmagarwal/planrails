@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.5.1 — 2026-09-13
+
+A fresh-context review of 0.5.0, run the same day, found the block — the one copy
+of the rule that survives into a real plan — weaker than §4, and wrong in one
+case: it matched a holder by name, and a name changes (accepting a plan in Claude
+Code's plan mode retitles the session; `claude -n` and a resume can rename it), so
+a live holder could read as stale and be taken over. This repo's own plan hit it
+within the hour.
+
+- **The block matches by session id.** Its paragraph now says what the line holds
+  (name · first 8 characters of the session id · since), that the id is what to
+  match, which listing to run and what it shows, the three outcomes — stop; stale
+  only when the id is unlisted *and* no other session in the checkout is live;
+  write your own line on `doing` and on a takeover — and what to do without a
+  listing: git is the record. Step 1 of the loop puts the session on the line.
+- **§4** matches the id over the whole listing before any directory filter (a
+  session can hold a plan from another directory), drops the last-activity
+  advice, and adds the no-listing rule and "a plan you wrote in this session
+  already names you"; §1 speaks of plans in the plural and who holds each; the
+  "Why" bullet names no private repository.
+- The skill puts the listing first and no longer says "or plausibly does"; the
+  worked example's `CLAUDE.md` carries the held-by sentence; the template pin now
+  fails when the NOW line is lost or the paragraph leaves the block. 74 tests.
+- **Existing 0.5.0 plans:** replace the block's last paragraph and its step 1 with
+  the template's.
+- Field-tested on these files, with PLAN.md hashes recorded and each case's start
+  state committed: a holder renamed after the claim was written was recognised
+  by its id and left alone; a plan with no line, a dirty PLAN.md and a busy peer
+  stopped the newcomer; told to continue the second of two plans, a session
+  claimed only that one and left the held plan byte-identical; a stale claim
+  with nothing else live was taken over with a correctly written line, and the
+  plan finished by the loop. 0.5.0's field test ran the block pasted into a 0.4.1
+  planner: the block was tested, §4 was not; this one runs the shipped bytes.
+
 ## 0.5.0 — 2026-09-13
 
 One method change, paid for by a real collision. The reload line loads an active

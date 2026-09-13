@@ -30,8 +30,9 @@ No dependencies. Node 20+, any OS.
   honest: an active plan has its reload line, and NOW names an open task. Keep it
   to that, and fail closed: a row the parser cannot read is a problem, never a
   pass. NOW's `session:` line is method: the checker ignores it (a test pins
-  that), because liveness is a runtime fact, not a commit-time one. Every behaviour has a case in `tools/check-plans.test.mjs`; add one for
-  anything you change.
+  that), because liveness is a runtime fact, not a commit-time one. Every
+  behaviour has a case in `tools/check-plans.test.mjs`; add one for anything you
+  change.
 - **Keep it copy-simple.** The CLI (`bin/planrails.mjs`) only copies two files
   into a project's `.project-management/planrails/`, updates those two on a
   re-run, never touches a plan, and runs the checker — no `package.json` edits,

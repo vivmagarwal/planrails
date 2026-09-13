@@ -3,10 +3,10 @@
 status: active · opened 2026-09-13 · id: session-claim
 
 ## NOW
-RESUME: T8 — blocked on the owner's word: nothing in edodo-video until the task in `edodo-video-9a` is 100% done; then `node bin/planrails.mjs init --dir ../../edodo-video`, the plan's NOW `session:` line and block, the CLAUDE.md lines, a LOG entry, commit by path
-NEXT: T9 · then §5 close (re-run proofs, retire)
-updated: 2026-09-13 18:42
-session: edodo-video-6c · b4c97545 · since 2026-09-13 18:16
+RESUME: T12 — 0.5.1: CHANGELOG, `npm run check`, commit, push main; the tag on the owner's go; then `npx planrails@0.5.1 init` in an empty folder
+NEXT: T8 and T9 stay blocked on the owner's word; T11 closes on it
+updated: 2026-09-13 19:14
+session: session-aware-planrails · b4c97545 · since 2026-09-13 18:16
 
 ## How to work this plan
 Read NOW, then Rules and Learnings; do not re-read Context. One task at a time:
@@ -27,9 +27,8 @@ The reload line puts an active plan into every Claude Code session opened in a c
 - `npm run check` exits 0: both suites, this repo's plans and the worked example through the checker
 - the checker passes a plan with a `session:` claim, with `session: none`, and with no line at all, and still reports a stale RESUME beside the line (T1)
 - the template block tells a session to check who holds the plan before `doing`, even when asked; the pin test demands it (T2)
-- field test: a headless session told "Continue the active plan." while another live session holds it stops, reports and asks, and PLAN.md and `git status --short` are unchanged; a stale claim is taken over; a plan with no line and a dirty PLAN.md stops it; told "continue plan two" of two, it names and touches only that one (T3)
-- the same in edodo-video with a real second session (T9)
-- `npx planrails@0.5.0 init` in an empty folder writes the two stamped files and nothing else (T7)
+- field test on the shipped files (T3, T11): a headless session told to continue stops, reports, asks and writes nothing while the holder is live — by id, whatever its name; takes over a stale claim with a correct line; given the second of two plans, claims and touches only that one; the same in edodo-video with a real second session (T9)
+- `npx planrails@0.5.0 init` in an empty folder writes the two stamped files and `plans/.gitkeep`, nothing else (T7)
 
 ## Must not change
 - one prompt, one dependency-free script; `init` writes only its two files; no hook, no config, no dependency
@@ -49,6 +48,9 @@ The reload line puts an active plan into every Claude Code session opened in a c
 | T7 | release 0.5.0: package.json and both stamps together; commit and push main; the tag by name only on the owner's go; then `npx planrails@0.5.0 init` in an empty folder writes two stamped files and nothing else | done | `node --test bin/planrails.test.mjs` | 2026-09-13 18:42 · `node --test bin/planrails.test.mjs` exit 0 · "ℹ pass 13 ℹ fail 0"; 6b9b210 on main, CI 34758824914 success ×9, tag v0.5.0 pushed 18:40, publish 34759071945 success, `npm view planrails version` = 0.5.0, `npx planrails@0.5.0 init` in an empty folder wrote the two 0.5.0-stamped files and .gitkeep, nothing else |
 | T8 | rollout into edodo-video, only after the owner says `edodo-video-9a` is stopped or idle: `node bin/planrails.mjs init --dir ../../edodo-video`; the active plan's NOW `session:` line and block by hand; CLAUDE.md gets the "Active plans" line and a hard-won rule; a LOG.md entry; commit by path | blocked | `(cd ../../edodo-video && node .project-management/planrails/check-plans.mjs)` | 2026-09-13 owner: "don't change anything with this project yet! i will just run 1 session for this project until the task that's running in the other session is 100% done" — waits for the owner's word |
 | T9 | the real case: with `edodo-video-9a` live and holding `composition-to-document`, a fresh session in edodo-video told "continue the plan" stops, reports, asks and writes nothing | blocked | owner | blocked with T8: needs the rollout, and a second session in edodo-video, which the owner does not want yet |
+| T10 | 0.5.1 after the fresh-context review: the block matches the holder by session id, says what the line holds, when a claim is stale (id not listed and no other live session in the checkout), what to write on `doing` and a takeover, and what to do without a listing; §4 aligned (no `--cwd` before the id match, no last-activity internals); §1 plural; the Why bullet names no private repo; skill lists first and drops "plausibly"; the example CLAUDE.md carries the held-by sentence; the pin fails when the NOW line is lost or the paragraph leaves the block | done | `node --test tools/check-plans.test.mjs` | 2026-09-13 18:57 · exit 0 · "ℹ pass 61 ℹ fail 0"; the pin checked in memory: red without the NOW line, red with the paragraph outside the block |
+| T11 | field test on the 0.5.1 files, PLAN.md hashes recorded before and after, case states committed: (vi) holder renamed after the claim, same id → held, stop; (ii) stale id, no peer → takeover writes name · id · since correctly, checked against B's own session id; (iii) isolated: no committed line, dirty PLAN.md, busy peer → stop; (iv) two plans → the assigned one claimed with the right id, the other byte-identical | review | owner | 2026-09-13 19:14 · on the 0.5.1 bytes, hashes and case-state branches recorded: (vi) holder renamed, same id → held, stop, nothing written; (iii) isolated → stop, nothing written; (iv) → farewell claimed with B's own id, done, greeting byte-identical; (ii) → stale id taken over with B's own id, both tasks done, plan retired. Three earlier runs voided by a harness fault (commits that never ran). Awaiting the owner's word |
+| T12 | release 0.5.1: CHANGELOG (honest about what 0.5.0's field test covered), package.json and both stamps; commit and push main; the tag only on the owner's go; `npx planrails@0.5.1 init` writes the two stamped files and .gitkeep | doing | `npm run check` | |
 
 ## Rules for this plan
 - Every checker change ships with a test that fails without it; prose is proven by the owner. No checker change is planned: only its stamp moves with the version.
@@ -72,15 +74,16 @@ The reload line puts an active plan into every Claude Code session opened in a c
 | 2026-09-13 | executed from a session whose cwd is edodo-video (`edodo-video-6c`) | the owner asked there; the claim's id identifies it, since its registry `cwd` is not this repo |
 
 ## Learnings
+- The block matched a holder by name, and a name changes (plan mode retitles the session on accept; `claude -n` and a resume rename it): this plan's own claim `edodo-video-6c` stopped matching its live holder within the hour → the block matches by session id, and names are for people (fresh-context review, 2026-09-13)
+- A field test of the block is not a test of §4: the scratch planner was the 0.4.1 file with the new template pasted in → copy the files the release will ship, and re-run after every wording change (review)
 - "id" in the claim was read two ways by two sessions: one wrote the first eight characters of the session id, one the bracketed ref `ListAgents` prints → the template and §4 say which: the session id (`sessionId` in `claude agents --json`, `$CLAUDE_CODE_SESSION_ID` inside the session), never the ref (field test case iv)
 - A reloaded plan reads as a work order to a session opened for something else → the block says a plan in context is not a work order, and the check for a live holder runs before any `doing`, even when asked (edodo-video, 2026-09-13: a second session committed and was starting T5b while the first was mid-edit)
 
 ## Context (read during planning — do not re-read)
-- PLANNER.md — §3 reload-line bullet 120-131 ("One active plan per repo" at 128); §4 opens 150-155, loop step 1 at 159; §5 step 4 at 228-232; "Why" 244-273 ("NOW is three lines" at 264); template NOW 294-297, block 299-307
-- tools/check-plans.mjs — `resumeIds` reads only `RESUME:` (253) and `isActive` only `status:` (248): a `session:` line is inert to the gate
-- tools/check-plans.test.mjs — NOW tests 188-215 (the `plan()` helper at 189); template pin test 243-260, must-include list at 258
-- examples/weekly-digest/.project-management/plans/weekly-digest/PLAN.md — the worked example; the README excerpt mirrors its top
-- bin/planrails.test.mjs — both stamps pinned to package.json
-- Claude Code 2.1.270, verified 2026-09-13: `claude agents --json [--cwd DIR]` lists live sessions with pid, cwd, kind, startedAt, sessionId, name, status (busy, idle, waiting + waitingFor); interactive sessions in other terminals included. `ListAgents` prints "This session is <name>" and the peers without cwd. `~/.claude/sessions/<pid>.json` holds the same data plus `nameSource` (derived or auto). An entry changes on status, not on edits. Whether a `claude -p` run is listed: a lead, T3 settles it
-- the sessions: this one is `edodo-video-6c`, id b4c97545, registry cwd /Users/vivmagarwal/Work/edodo-video; edodo-video's `composition-to-document` is held by `edodo-video-9a`, id e999d3be, busy since 10:17
-- the incident's commit: edodo-video 4f4f6ea by this session — the 0.4.1 upgrade plus the active plan's block, while 9a was mid-edit on that PLAN.md
+- PLANNER.md — §3 the reload-line bullet and the two session bullets; §4 "Find out who holds the plan"; §5 step 4; "Why"; the template's NOW and block
+- tools/check-plans.mjs — `resumeIds` reads only `RESUME:`, `isActive` only `status:`: a `session:` line is inert to the gate
+- tools/check-plans.test.mjs — the NOW tests, the session-line describe, the template pin; bin/planrails.test.mjs pins both stamps to package.json
+- examples/weekly-digest/… — the worked example; the README excerpt mirrors its top
+- Claude Code 2.1.270, 2026-09-13: `claude agents --json` lists live sessions with pid, cwd, kind, startedAt, sessionId, name, status; a `-p` run is listed within 3 s as kind interactive and has `ListAgents`; `ListAgents` prints a bracketed ref that is not the session id; accepting a plan in plan mode retitles the session
+- sessions: this one is id b4c97545 (named `edodo-video-6c`, then retitled), registry cwd edodo-video; edodo-video's `composition-to-document` is held by `edodo-video-9a`, id e999d3be; the incident's commit there is 4f4f6ea, by this session
+- field-test artefacts: ~/Work/temporary_tests/two-sessions (branches base2, case-*-start, case-*-end) and this session's scratchpad (b*.json, t11-hashes.txt, review-0.5.0.md)

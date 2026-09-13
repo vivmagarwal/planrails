@@ -275,7 +275,13 @@ describe("the PLAN.md template in PLANNER.md — case 11 (0.4.0): template and p
     assert.equal(isActive(template), true);
   });
   it("carries the block a fresh session works from", () => {
-    for (const must of ["## How to work this plan", "## NOW", "RESUME:", "session:", "exit N", "`date`", "LOG.md", "Learnings", "check-plans.mjs", "claude agents", "git status --short"]) assert.ok(template.includes(must), must);
+    for (const must of ["## How to work this plan", "## NOW", "RESUME:", "exit N", "`date`", "LOG.md", "Learnings", "check-plans.mjs"]) assert.ok(template.includes(must), must);
+  });
+  it("names the session in NOW, and the block itself carries the check (0.5.1)", () => {
+    const now = template.slice(template.indexOf("## NOW"), template.indexOf("## How to work this plan"));
+    assert.ok(now.includes("session: <none"), "NOW carries the session placeholder");
+    const block = template.slice(template.indexOf("## How to work this plan"), template.indexOf("## Goal"));
+    for (const must of ["session:", "session id", "claude agents --json", "git status --short", "not yours", "stale", "take over", "`date`", "git is the record"]) assert.ok(block.includes(must), `the block itself says: ${must}`);
   });
 });
 

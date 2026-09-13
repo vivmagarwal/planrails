@@ -96,7 +96,7 @@ planner method does not depend on any language.
 
 ### As a `/planrails` command in Claude Code
 
-Copy [`skill/`](skill) to `~/.claude/skills/planrails/`. Then `/planrails` starts
+Copy [`skill/`](https://github.com/vivmagarwal/planrails/tree/main/skill) to `~/.claude/skills/planrails/`. Then `/planrails` starts
 the same flow in any project that has run `npx planrails init` — the skill reads
 the project's own copy of `PLANNER.md`, so every project follows the version it
 has. (It is not called `/plan`, because Claude Code has a `/plan` of its own.)
@@ -199,8 +199,8 @@ it. One plan per session, one session per plan; the other reloaded plans are
 context. The claim is a lead, not a lock: a line left by a closed terminal blocks
 nobody, and the checker ignores the line. Field-tested with headless sessions: a
 second session told "Continue the active plan." stopped and asked while the first
-was live, took over when it was gone, and touched only the plan it was given when
-two were active.
+was live — by its id, after the first had been renamed — took over when it was
+gone, and touched only the plan it was given when two were active.
 
 ## History
 

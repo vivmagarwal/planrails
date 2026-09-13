@@ -1,4 +1,4 @@
-<!-- planrails 0.5.0 -->
+<!-- planrails 0.5.1 -->
 # The Planner
 
 You are about to plan a piece of work with a person, then help execute it so the
@@ -58,8 +58,9 @@ tell you what the repo already says.
 2. **List `docs/`** and read the ones this feature touches. Use sub-agents for
    long files so your own context stays clear. Record each relevant doc's path
    and one line of what it holds.
-3. **Read `.project-management/`.** Read the active plan in full; list the
-   finished ones by id only.
+3. **Read `.project-management/`.** Read in full the plan this session is
+   assigned — the person names it; if one plan is active, that one — and list
+   the others by id, with who holds each (NOW's `session:` line).
 4. **Read the last ~20 commits** (`git log --oneline -20`) for how the code moves.
 
 **A sub-agent's finding is a lead, not a fact.** If it names a file and line, you
@@ -73,7 +74,7 @@ READY — <project name>
 Stack:      <language, framework, package manager>
 Always-on:  <CLAUDE.md | AGENTS.md | README.md>
 Check:      <the check command>   Test: <the test command>
-Plans:      <existing plan ids; which is active, or "none">
+Plans:      <existing plan ids; which are active and who holds each, or "none">
 Docs:       <relevant doc paths, or "none">
 Touches:    <the folders this feature will change>
 Questions:  <up to 4 things the repo did not answer, or "none">
@@ -177,23 +178,30 @@ which plan you are on, or none. Before any task goes `doing` — even when the
 person just asked you to continue; they can forget which window holds the plan —
 re-read that line from disk (your reloaded copy may be older than the file), list
 the live sessions, and run `git status --short`. `claude agents --json` lists every
-live session on the machine: `name`, `sessionId`, `cwd`, `pid`, `status` (`busy`,
-`idle`, or `waiting` for the person) and `startedAt`; `--cwd <dir>` keeps those
-started under a directory, and a headless `claude -p` run is listed too. In Claude
-Code, `ListAgents` names you and the peers, but its bracketed ref is not the
-session id; the id is `$CLAUDE_CODE_SESSION_ID`. An entry changes on status, not
-on edits: last activity is the plan's `updated:` stamp or its transcript's mtime
-under `~/.claude/projects/`. Then decide:
+live session on the machine — an interactive one with `name`, `sessionId`, `cwd`,
+`pid`, `status` (`busy`, `idle`, or `waiting` for the person) and `startedAt`; a
+background one with `state` — and a headless `claude -p` run is listed too. Match
+the line's id against `sessionId` over the whole listing; `cwd` then tells which
+peers are in this checkout. Never filter by directory before matching the id: a
+session can hold a plan from another directory. Names are for people: accepting
+a plan in Claude Code's plan mode retitles the session, `claude -n` and a resume
+can rename it. In Claude Code, `ListAgents` names you and the peers, but its
+bracketed ref is not the session id; the id is `$CLAUDE_CODE_SESSION_ID`. Then
+decide:
 
-- The line names you: go on.
-- It names a live session that is not you: stop. Busy is mid-task; idle is between
-  turns and still the holder; waiting means it needs the person — tell them.
-- It names a session the listing lacks: say so. No other live session in this
-  checkout: take over, write your claim. One is: stop; the id tells whether it is
-  that conversation resumed under a new name.
+- The line's id is yours, whatever your name is now: go on. A plan you wrote in
+  this session already names you.
+- Its id is live and not yours: stop. Busy is mid-task; idle is between turns
+  and still the holder; waiting means it needs the person — tell them.
+- Its id is not listed: the claim is stale only when no other session in this
+  checkout is live — then say so, take over, write your claim. When one is live,
+  stop and ask; it may be the holder under a new id, after a branch or a fork.
 - `none`, or no line (an older plan): a busy session in this checkout, or plan
   files dirty in `git status`: stop. Otherwise say what you saw in one line, write
   your claim, go on.
+- No `claude` command (another agent), or a plan shared across machines: there is
+  no listing to consult. Git is the record: pull first, read a `doing` row with a
+  fresh `updated:` stamp as someone's work in flight, and ask.
 - A worktree is another checkout with its own copy of the plan: a merge concern
   later, not a clobber now. A sub-agent you briefed never runs this check; it
   never writes the plan.
@@ -279,9 +287,9 @@ the task `blocked` with the reason, and stop. Do not hand-fix state to look done
 3. **Update the docs** the work changed — in the same step, per the project's
    documentation guide if it has one.
 4. **Retire the plan.** Set its header to `status: done` and NOW's `session:` to
-   `none`, then wrap its reload line in backticks, or delete it. Do not move a bare `@` line under a
-   "Finished" heading: it still imports, and every retired plan would reload
-   forever. The status comes first: the checker holds an `active` plan to its
+   `none`, then wrap its reload line in backticks, or delete it. Do not move a
+   bare `@` line under a "Finished" heading: it still imports, and every retired
+   plan would reload forever. The status comes first: the checker holds an `active` plan to its
    reload line. The plan files stay on disk; they are the record.
 5. **Graduate any lasting learning.** A learning that is true beyond this feature
    moves to the always-loaded file (`CLAUDE.md` / `AGENTS.md`), so it outlives the
@@ -322,12 +330,13 @@ Each line here was paid for by a real failure in earlier planning systems:
   path a reader cannot open is worse than none.
 - **The `session:` line and the check before `doing`** exist because the reload
   line loads a plan into every session opened in a checkout, not only the one
-  working it. On 2026-09-13 in edodo-video, a second session, opened for a
-  planrails upgrade, read the reloaded plan, was told "continue with T5",
-  committed, and was starting T5b while the first session was mid-edit on the
-  same files and the same PLAN.md; the owner interrupted. The person had asked,
-  so the check runs even then. The claim is a lead and the live listing decides,
-  so a stale line from a closed terminal blocks nobody.
+  working it. On 2026-09-13, a second session in one repo, opened for a tool
+  upgrade, read the reloaded plan, was told to continue, committed, and was
+  starting the next task while the first session was mid-edit on the same files
+  and the same PLAN.md; the owner interrupted. The person had asked, so the check
+  runs even then. The claim is a lead and the live listing decides, so a stale
+  line from a closed terminal blocks nobody — and it is matched by session id,
+  because the same day a session's name changed within the hour.
 - **Nothing the method needs is installed.** `npx planrails init` only copies two
   files, and you can copy them by hand instead. The old version was a heavy
   package, and that is what broke on the projects that were not npm — Python,
@@ -360,7 +369,7 @@ session: <none, or the session working this plan: name · the first 8 characters
 
 ## How to work this plan
 Read NOW, then Rules and Learnings; do not re-read Context. One task at a time:
-1. Set it `doing`; point NOW at it.
+1. Set it `doing`; point NOW at it; put your session on its `session:` line.
 2. Do the work: fix causes, not symptoms; the simplest change that works end to end.
 3. Run the proof now. Paste `YYYY-MM-DD HH:MM · exit N · "last line"` into evidence. Every stamp comes from `date` run at that moment, never typed from memory.
 4. `done` only if N is 0. Point NOW at the next task; append an entry to LOG.md: did, files, proof, next, learned.
@@ -368,7 +377,7 @@ Read NOW, then Rules and Learnings; do not re-read Context. One task at a time:
 
 NOW is four lines for a stranger; on a long task note the sub-step, and update it before any turn ends. Blocked: say so in NOW, reason in the evidence cell. A task you will not do is `dropped`; its row stays. After a compaction, `git status --short` shows the in-flight work. Edit this file with the editor or a quoted heredoc; an unquoted shell string eats backticks. A self-contained task may go to a sub-agent briefed with its row, Rules, Decisions, Learnings and Context; it writes to a named file and reports a few lines, which are leads; you run the proof before pasting evidence. If the project runs Node, `node .project-management/planrails/check-plans.mjs` must pass. Full method: `.project-management/planrails/PLANNER.md` §4.
 
-The `session:` line names the one session working this plan. Before any task goes `doing`, even when asked to continue: re-read NOW from disk, run `claude agents --json` (in Claude Code, `ListAgents` names you) and `git status --short`. If the line names a live session that is not you, or says `none` while another session in this checkout is busy or plan files are dirty: stop, report what you found, and ask before writing to the plan, its files, or a commit. A named session the listing lacks is stale: say so, take over. Other reloaded plans are context; work only the one assigned in this session, and say which.
+The `session:` line names the one session working this plan: name · first 8 characters of its session id · since. Match by id; names change. `claude agents --json` lists every live session on this machine with `sessionId`, `cwd` and `status`; in Claude Code your id is `$CLAUDE_CODE_SESSION_ID`. Before any task goes `doing`, even when asked to continue: re-read NOW from disk, run that listing and `git status --short`. Stop, report what you found, and ask before writing to the plan, its files, or a commit if the line's id is live and not yours, or if the line is `none` or missing while another session in this checkout is busy or plan files are dirty. If the id is not listed and no other session in this checkout is live, the claim is stale: say so, take over. On `doing` and on a takeover, write your own name · id · since, from `date`. Without a `claude` command, or on another machine, git is the record: pull first, treat a fresh `doing` row as someone's work in flight, and ask. Other reloaded plans are context; work only the one assigned in this session, and say which.
 
 ## Goal
 <4–5 sentences: what we are building and why. What is true when it ships. A mermaid diagram only if the architecture is non-trivial.>

@@ -26,10 +26,10 @@ The short version, so you know where you are going:
    Then check the plan before the first task: open every path it names, start
    every proof.
 4. **Execute** one task at a time. First find out who holds the plan: read NOW's
-   `session:` line, run `ListAgents` (or `claude agents --json`) and
-   `git status --short`; if another live session holds it, or plausibly does,
-   report and ask before writing anything — even when the user asked you to
-   continue. Several reloaded plans: work only the one the user assigned in this
+   `session:` line, run `claude agents --json` (match its id — `ListAgents`
+   names you, but names change) and `git status --short`; if another live
+   session holds it, report and ask before writing anything — even when the user
+   asked you to continue. Several reloaded plans: work only the one the user assigned in this
    session, and say which. Then do it, run the proof now, paste the exit code
    and last line into the evidence cell (exit 0, or it is not done), then mark it
    done and update NOW. A self-contained task can go to a sub-agent briefed with

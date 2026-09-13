@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// planrails 0.5.0
+// planrails 0.5.1
 /**
  * check-plans — the machine-checked rails of the planner.
  *
