@@ -17,21 +17,25 @@ worked example, are closed here.
   live holder, matched by id, stops you.
 - **An `owner` proof is closed only by the person.** A field session closed an
   owner task with a check of its own and an invented exit code; the checker cannot
-  see that. The block and §4 now say: leave the row open, say so in RESUME.
+  see that. The block and §4 now say: the row stays `blocked` with the reason in
+  its evidence cell, and RESUME says so.
 - **NOW keeps its shape, and the block says how a plan closes.** A session
   renamed RESUME to DONE, wrote the `session:` line twice and left a finished plan
   active. The block says NOW is exactly the four lines, and points at §5 for the
-  close. The checker now fails an active plan with no RESUME line, the one hole a
-  renamed line opened in the NOW rule.
-- **The block is shorter and the rule is a list.** Its session paragraph fell from
-  197 words to a five-line list; the whole block is about 480 words, with the owner
-  and close clauses added.
+  close. The checker now fails an active plan whose NOW section has no RESUME
+  line, the one hole a renamed line opened in the NOW rule.
+- **The session rule is a list.** Its paragraph fell from 197 words to four
+  bullets; the whole block is about 480 words, up from 443, with the owner and
+  close clauses added.
+- **Existing 0.5.0 and 0.5.1 plans:** replace the block with the template's, so
+  they carry the unheld-plan rule and the owner clause; `init` cannot tell them
+  from 0.5.2 plans, since they already have a `session:` line.
 - **The worked example carries the template's block, byte for byte**, pinned by a
   test. It had shipped the 0.5.0 paragraph that matched holders by name.
 - **`init` points out plans that predate 0.5**: an active plan with no `session:`
   line is named, with the by-hand steps from 0.5.0. `init` still never touches a
   plan.
-- Timestamps come from the shell clock, `date` or `Get-Date` on Windows, where
+- Timestamps come from the shell clock: `date`, or `Get-Date` on Windows, where
   `date` prompts. The README no longer suggests `ListAgents` can do the id match.
   The 0.4.0 entry no longer overstates the stray-backtick fix. 77 tests.
 

@@ -27,7 +27,8 @@ No dependencies. Node 20+, any OS.
   merged.
 - **`tools/check-plans.mjs` enforces one rule** — a done task needs a proof and
   evidence that records `exit 0` — plus two integrity checks that keep the reload
-  honest: an active plan has its reload line, and NOW names an open task. Keep it
+  honest: an active plan has its reload line, and its NOW keeps a RESUME line
+  that names an open task. Keep it
   to that, and fail closed: a row the parser cannot read is a problem, never a
   pass. NOW's `session:` line is method: the checker ignores it (a test pins
   that), because liveness is a runtime fact, not a commit-time one. Every

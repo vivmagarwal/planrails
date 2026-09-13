@@ -161,7 +161,8 @@ structural check, biased toward catching a faked "done":
 - when the project has a `CLAUDE.md`, every active plan must be reloaded by
   `@.project-management/plans/<id>/PLAN.md` on its own line, and no such line may
   point at a plan that does not exist
-- an active plan's `RESUME` line must name a task that is still open
+- an active plan keeps its `RESUME` line, and that line must name a task that
+  is still open
 
 `--verify` goes further and **runs** each proof again, with a timeout, and shows
 the last line a failing proof printed. Because it executes the commands written in
@@ -198,7 +199,8 @@ stop and ask when another live session holds the plan — even when you asked it
 continue, because you can forget which window owns it. One plan per session, one
 session per plan; the other reloaded plans are context. A session assigned an
 unheld plan claims it and goes on, unless that plan's files are dirty or a busy
-peer holds no plan, so two sessions can work two plans side by side. A plan
+peer in this checkout holds no plan, so two sessions can work two plans side by
+side. A plan
 written before 0.5 has no `session:` line; `init` points it out, and the
 changelog says what to add by hand. The claim is a lead, not a lock: a line left by a closed terminal blocks
 nobody, and the checker ignores the line. Field-tested with headless sessions: a

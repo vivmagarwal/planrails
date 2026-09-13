@@ -83,7 +83,7 @@ function init(args) {
     const pf = join(plans, name, "PLAN.md");
     if (!existsSync(pf)) continue;
     const text = readFileSync(pf, "utf8");
-    if (isActive(text) && !/^session:/m.test(text)) console.log(`  ! plan ${name} predates 0.5: add NOW's session: line and the block's "Who holds the plan" paragraph by hand (CHANGELOG 0.5.0); until then a second session cannot tell who holds it`);
+    if (isActive(text) && !/^session:/m.test(text)) console.log(`  ! plan ${name} predates 0.5: add a session: line to its NOW and replace its "How to work this plan" block with the template's in .project-management/planrails/PLANNER.md; until then a second session cannot tell who holds it`);
   }
   const loose = ["PLANNER.md", "check-plans.mjs"].filter((f) => existsSync(join(pm, f)));
   if (loose.length) console.log(`  ! 0.2.x files at .project-management/ root: ${loose.join(", ")} — the copies now live in planrails/; delete the loose ones and point your check command at .project-management/planrails/check-plans.mjs`);

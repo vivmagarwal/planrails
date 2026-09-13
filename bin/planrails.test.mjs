@@ -96,7 +96,7 @@ describe("planrails init", () => {
     const old = mk("old-plan", ""), fresh = mk("fresh-plan", "session: none\n");
     const r = run(["init", "--dir", dir]);
     assert.equal(r.status, 0, r.stderr);
-    assert.match(r.stdout, /! plan old-plan predates 0\.5: add NOW's session: line/);
+    assert.match(r.stdout, /! plan old-plan predates 0\.5: add a session: line to its NOW/);
     assert.doesNotMatch(r.stdout, /! plan fresh-plan/, "a plan with a session: line is not flagged");
     rmSync(old, { recursive: true, force: true }); rmSync(fresh, { recursive: true, force: true });
   });
