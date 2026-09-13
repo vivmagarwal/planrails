@@ -1,6 +1,6 @@
 {
   "name": "planrails",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Plans that survive a lost session, and \"done\" that means done. A planner prompt and a tiny checker.",
   "type": "module",
   "license": "MIT",
@@ -13,7 +13,7 @@
   "engines": { "node": ">=20" },
   "scripts": {
     "test": "node --test tools/check-plans.test.mjs bin/planrails.test.mjs",
-    "check": "node bin/planrails.mjs check --dir examples/weekly-digest && npm test",
+    "check": "node tools/check-plans.mjs && node bin/planrails.mjs check --dir examples/weekly-digest && npm test",
     "prepublishOnly": "npm test"
   }
 }

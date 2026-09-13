@@ -1,10 +1,12 @@
 /** The checker's rule: a completion claim must name a proof and carry pasted evidence. */
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, symlinkSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { parseTasks, proofCommand, checkPlan, findPlans, checkPlans } from "./check-plans.mjs";
+import { parseTasks, proofCommand, checkPlan, findPlans, checkPlans, reloadLines, isActive, runProof } from "./check-plans.mjs";
 
 const table = (rows, sep = "\n") =>
   `## Tasks${sep}${sep}| id | task | status | proof | evidence |${sep}|----|------|--------|-------|----------|${sep}${rows.join(sep)}${sep}`;
@@ -84,7 +86,7 @@ describe("checkPlan — what counts as a completion claim", () => {
     assert.match(p[0], /T2/);
   });
   it("catches a done task in a second Tasks table", () => {
-    const text = table(["| T1 | x | done | `c` | ok |"]) + "\n## More\n\n" + table(["| T2 | y | done | `c` | |"]);
+    const text = table(["| T1 | x | done | `c` | exit 0 |"]) + "\n## More\n\n" + table(["| T2 | y | done | `c` | |"]);
     const p = checkPlan({ id: "p", text });
     assert.equal(p.length, 1);
     assert.match(p[0], /T2/);
@@ -126,6 +128,184 @@ describe("checkPlan — what counts as a completion claim", () => {
   });
 });
 
+describe("checkPlan — the gate matches the method (0.4.0)", () => {
+  it("case 1: done with evidence `exit 1` fails — the proof failed", () => {
+    const p = checkPlan({ id: "p", text: one("done", "`npm test`", "2026-09-13 14:20 · exit 1 · \"2 failed\"") });
+    assert.equal(p.length, 1);
+    assert.match(p[0], /records exit 1 — the proof failed/);
+  });
+  it("case 2: a bare word is not evidence — the exit code must be recorded", () => {
+    for (const ev of ["done", "✅", "passed", "ok", "yes, ran it"]) {
+      const p = checkPlan({ id: "p", text: one("done", "`npm test`", ev) });
+      assert.equal(p.length, 1, `evidence ${JSON.stringify(ev)} must not count`);
+      assert.match(p[0], /does not record the proof's exit code/);
+    }
+    assert.deepEqual(checkPlan({ id: "p", text: one("done", "`npm test`", "exit code 0, 6 passed") }), []);
+    assert.deepEqual(checkPlan({ id: "p", text: one("done", "`npm test`", "2026-09-13 · exited 0") }), []);
+  });
+  it("case 3a: three backticks in a task cell are literal (CommonMark), so the row still reads and is gated", () => {
+    const { tasks } = parseTasks(table(["| T1 | lines inside ``` fences are never rows | done | `c` | |"]));
+    assert.equal(tasks[0].status, "done");
+    assert.equal(tasks[0].proof, "`c`");
+    const p = checkPlan({ id: "p", text: table(["| T1 | lines inside ``` fences are never rows | done | `c` | |"]) });
+    assert.equal(p.length, 1);
+    assert.match(p[0], /T1: status "done" but the evidence cell is empty/);
+  });
+  it("case 3b: a stray backtick that pairs with a later one leaves a short row — reported, never passed", () => {
+    const p = checkPlan({ id: "p", text: table(["| T1 | fix the `foo bug | done | `c` | |"]) });
+    assert.equal(p.length, 1);
+    assert.match(p[0], /row has 3 cell\(s\) but the header has 5/);
+  });
+  it("case 3c: an escaped pipe inside a code span is a literal pipe", () => {
+    const { tasks } = parseTasks(table(["| T1 | x | done | `grep -c a \\| wc -l` | exit 0 |"]));
+    assert.equal(tasks[0].proof, "`grep -c a | wc -l`");
+    assert.equal(tasks[0].cellCount, 5);
+  });
+  it("case 4: a proof that is prose fails — it must be a `command` or owner", () => {
+    const p = checkPlan({ id: "p", text: one("done", "ran the tests by hand", "exit 0") });
+    assert.equal(p.length, 1);
+    assert.match(p[0], /must be a `command` in backticks or the word owner/);
+    assert.deepEqual(checkPlan({ id: "p", text: one("done", "Owner", "2026-09-13 owner said ship") }), []);
+  });
+  it("case 5: a task table inside a code fence is an example, not tasks", () => {
+    const text = table(["| T1 | x | done | `c` | exit 0 |"]) + "\n## Learnings\n- keep tables like this:\n```\n| id | task | status | proof | evidence |\n|--|--|--|--|--|\n| T9 | y | done | `c` | |\n```\n";
+    assert.equal(parseTasks(text).tasks.length, 1);
+    assert.deepEqual(checkPlan({ id: "p", text }), []);
+  });
+  it("case 6: a Decisions table right after the Tasks table, no heading between, is not read as tasks", () => {
+    const text = table(["| T1 | x | todo | `c` | |"]) + "\n| date | decision | why |\n|--|--|--|\n| 2026-09-13 | five posts | fits one screen |\n";
+    assert.equal(parseTasks(text).tasks.length, 1);
+    assert.deepEqual(checkPlan({ id: "p", text }), []);
+  });
+  it("case 7: markup in the header cells (**id**) is ignored", () => {
+    const text = "## Tasks\n| **id** | **task** | **status** | **proof** | **evidence** |\n|--|--|--|--|--|\n| T1 | x | done | `c` | |\n";
+    const p = checkPlan({ id: "p", text });
+    assert.equal(p.length, 1);
+    assert.match(p[0], /T1: status "done" but the evidence cell is empty/);
+  });
+});
+
+describe("checkPlan — NOW is current (0.4.0)", () => {
+  const plan = (resume, rows) => `# P — plan\n\nstatus: active · opened 2026-09-13 · id: p\n\n## NOW\nRESUME: ${resume}\nNEXT: —\nupdated: 2026-09-13 14:00\n\n` + table(rows);
+  const T1done = "| T1 | x | done | `c` | 2026-09-13 · exit 0 · \"ok\" |";
+  it("case 10: a RESUME line that names only done tasks is stale", () => {
+    const p = checkPlan({ id: "p", text: plan("T1 — finish x", [T1done, "| T2 | y | todo | `c` | |"]) });
+    assert.equal(p.length, 1);
+    assert.match(p[0], /NOW is stale — RESUME names T1, which is done/);
+  });
+  it("passes when RESUME names an open task, or a done one beside an open one", () => {
+    assert.deepEqual(checkPlan({ id: "p", text: plan("T2 — do y", [T1done, "| T2 | y | todo | `c` | |"]) }), []);
+    assert.deepEqual(checkPlan({ id: "p", text: plan("T1 landed; T2 — do y", [T1done, "| T2 | y | todo | `c` | |"]) }), []);
+    assert.deepEqual(checkPlan({ id: "p", text: plan("T12 — the last one", [T1done, "| T12 | z | doing | `c` | |"]) }), [], "T1 must not match inside T12");
+  });
+  it("skips the NOW rule for a retired plan, and when there is no RESUME line", () => {
+    const retired = plan("T1 — finish x", [T1done]).replace("status: active", "status: done");
+    assert.deepEqual(checkPlan({ id: "p", text: retired }), []);
+    assert.equal(isActive(retired), false);
+    assert.deepEqual(checkPlan({ id: "p", text: "status: active\n\n" + table([T1done]) }), []);
+  });
+});
+
+describe("reloadLines — rail 1 (0.4.0)", () => {
+  it("reads @ lines on their own line, outside fences and backticks", () => {
+    const ids = reloadLines("# P\n\n## Active plans\n@.project-management/plans/alpha/PLAN.md\n\n## Finished\n`@.project-management/plans/beta/PLAN.md`\n\n```\n@.project-management/plans/gamma/PLAN.md\n```\nsee @.project-management/plans/delta/PLAN.md inline\n");
+    assert.deepEqual([...ids], ["alpha"]);
+  });
+});
+
+describe("--verify — case 8 (0.4.0): a failing proof shows its last line, a hanging one times out", () => {
+  it("reports the last output line of a failing proof through checkPlan", () => {
+    const text = table(["| T1 | x | done | `c` | exit 0 claimed |"]);
+    const p = checkPlan({ id: "p", text, verify: true, run: () => ({ code: 2, last: "boom: 2 failed" }) });
+    assert.equal(p.length, 1);
+    assert.match(p[0], /proof re-run failed — `c` exited 2 — boom: 2 failed/);
+  });
+  it("runProof runs a real command and keeps its exit code and last line", () => {
+    const r = runProof("node -e \"console.log(123);process.exit(3)\"", process.cwd(), 20000);
+    assert.equal(r.code, 3);
+    assert.equal(r.last, "123");
+    assert.equal(runProof("node -e \"process.exit(0)\"", process.cwd(), 20000).code, 0);
+  });
+  it("runProof times out a hanging proof instead of hanging the build", () => {
+    const r = runProof("node -e \"setTimeout(function(){},30000)\"", process.cwd(), 500);
+    assert.equal(r.code, "timeout after 0.5s");
+  });
+});
+
+describe("the PLAN.md template in PLANNER.md — case 11 (0.4.0): template and parser cannot drift apart", () => {
+  const planner = readFileSync(new URL("../PLANNER.md", import.meta.url), "utf8");
+  const start = planner.indexOf("## Template — PLAN.md");
+  const open = planner.indexOf("````markdown", start);
+  const close = planner.indexOf("````", open + 12);
+  const template = planner.slice(open + "````markdown".length, close).trim();
+  it("is found, has three placeholder rows, and passes the gate as written", () => {
+    const { found, tasks } = parseTasks(template);
+    assert.equal(found, true);
+    assert.deepEqual(tasks.map((t) => t.id), ["T1", "T2", "T3"]);
+    assert.ok(tasks.every((t) => t.cellCount === t.headerCount), "every template row has every column");
+    assert.deepEqual(checkPlan({ id: "template", text: template }), []);
+    assert.equal(isActive(template), true);
+  });
+  it("carries the block a fresh session works from", () => {
+    for (const must of ["## How to work this plan", "## NOW", "RESUME:", "exit N", "`date`", "LOG.md", "Learnings", "check-plans.mjs"]) assert.ok(template.includes(must), must);
+  });
+});
+
+describe("fresh-context review fixes (0.4.0)", () => {
+  it("case 4b: a code span inside prose is not a proof — the cell must be exactly one command", () => {
+    const p = checkPlan({ id: "p", text: one("done", "see `README.md` for the check", "exit 0") });
+    assert.equal(p.length, 1);
+    assert.match(p[0], /must be a `command` in backticks or the word owner/);
+    assert.equal(proofCommand("see `README.md` for the check"), null);
+    assert.equal(proofCommand("  `npm test`  "), "npm test");
+  });
+  it("every exit code in the evidence counts, and 'exit status'/'exit-code' spellings are read", () => {
+    assert.match(checkPlan({ id: "p", text: one("done", "`c`", "exit 0 on the first run, exit 1 on the rerun") })[0], /records exit 1/);
+    assert.match(checkPlan({ id: "p", text: one("done", "`c`", "2026-09-13 · exit status 1") })[0], /records exit 1/);
+    assert.match(checkPlan({ id: "p", text: one("done", "`c`", "exit-code 2") })[0], /records exit 2/);
+  });
+  it("an owner-closed task records the owner's words with a date, not a bare tick", () => {
+    assert.match(checkPlan({ id: "p", text: one("done", "owner", "✅") })[0], /records the owner's words with the date/);
+    assert.deepEqual(checkPlan({ id: "p", text: one("done", "owner", "2026-09-13 owner: ship it") }), []);
+  });
+  it("a ```` fence can hold a ``` example without exposing a table inside it", () => {
+    const text = table(["| T1 | x | done | `c` | exit 0 |"]) + "\n## Notes\n````markdown\nexample:\n```\n| id | task | status | proof | evidence |\n|--|--|--|--|--|\n| T9 | y | done | `c` | |\n```\n````\n";
+    assert.equal(parseTasks(text).tasks.length, 1);
+    assert.deepEqual(checkPlan({ id: "p", text }), []);
+  });
+  it("NOW is stale even when the id cell carries markup", () => {
+    const text = "status: active\n\n## NOW\nRESUME: T1 — x\n\n" + table(["| **T1** | x | done | `c` | exit 0 |", "| **T2** | y | todo | `c` | |"]);
+    assert.match(checkPlan({ id: "p", text })[0], /NOW is stale — RESUME names T1/);
+  });
+});
+
+describe("the checker as a command — it must never silently exit 0", () => {
+  const CHECKER = fileURLToPath(new URL("./check-plans.mjs", import.meta.url));
+  let root;
+  before(() => {
+    root = mkdtempSync(join(tmpdir(), "planrails-cli-"));
+    mkdirSync(join(root, ".project-management", "plans", "bad"), { recursive: true });
+    writeFileSync(join(root, ".project-management", "plans", "bad", "PLAN.md"), one("done", "`c`", ""));
+  });
+  after(() => { rmSync(root, { recursive: true, force: true }); });
+  it("run by its path, it reports the problem and exits 1", () => {
+    const r = spawnSync(process.execPath, [CHECKER, "--root", root], { encoding: "utf8" });
+    assert.equal(r.status, 1);
+    assert.match(r.stderr, /bad T1: status "done" but the evidence cell is empty/);
+  });
+  it("run through a symlink, the same", { skip: process.platform === "win32" ? "symlinks need privileges on Windows" : false }, () => {
+    const link = join(root, "checker-link.mjs");
+    symlinkSync(CHECKER, link);
+    const r = spawnSync(process.execPath, [link, "--root", root], { encoding: "utf8" });
+    assert.equal(r.status, 1, "a symlinked checker must still run: " + r.stdout + r.stderr);
+    assert.match(r.stderr, /evidence cell is empty/);
+  });
+  it("accepts --dir as well as --root", () => {
+    const r = spawnSync(process.execPath, [CHECKER, "--dir", root], { encoding: "utf8" });
+    assert.equal(r.status, 1);
+  });
+});
+
 describe("proofCommand", () => {
   it("extracts a backticked command including a pipe", () => assert.equal(proofCommand("`npm test | tail -1`"), "npm test | tail -1"));
   it("returns null for owner and for empty", () => { assert.equal(proofCommand("owner"), null); assert.equal(proofCommand(""), null); });
@@ -150,5 +330,39 @@ describe("findPlans / checkPlans (filesystem)", () => {
     const { plans, problems } = checkPlans({ root });
     assert.ok(plans.some((p) => p.id === "real"));
     assert.deepEqual(problems.filter((p) => p.startsWith("real ")), []);
+  });
+});
+
+describe("checkPlans — the reload line, case 9 (0.4.0)", () => {
+  let root;
+  const active = "# A — plan\n\nstatus: active · opened 2026-09-13 · id: alpha\n\n## NOW\nRESUME: T1 — x\n\n" + one("todo", "`c`", "");
+  before(() => {
+    root = mkdtempSync(join(tmpdir(), "planrails-rl-"));
+    mkdirSync(join(root, ".project-management", "plans", "alpha"), { recursive: true });
+    writeFileSync(join(root, ".project-management", "plans", "alpha", "PLAN.md"), active);
+  });
+  after(() => { rmSync(root, { recursive: true, force: true }); });
+  it("is skipped when the project has no CLAUDE.md", () => {
+    assert.deepEqual(checkPlans({ root }).problems, []);
+  });
+  it("fails an active plan that CLAUDE.md does not reload — including one only mentioned in backticks", () => {
+    writeFileSync(join(root, "CLAUDE.md"), "# P\n\n## Finished\n`@.project-management/plans/alpha/PLAN.md`\n");
+    const { problems } = checkPlans({ root });
+    assert.equal(problems.length, 1);
+    assert.match(problems[0], /alpha: the plan is active but CLAUDE.md has no reload line/);
+  });
+  it("passes once the line is there, and fails a line that points at a plan that does not exist", () => {
+    writeFileSync(join(root, "CLAUDE.md"), "# P\n\n## Active plans\n@.project-management/plans/alpha/PLAN.md\n");
+    assert.deepEqual(checkPlans({ root }).problems, []);
+    writeFileSync(join(root, "CLAUDE.md"), "# P\n\n@.project-management/plans/alpha/PLAN.md\n@.project-management/plans/gone/PLAN.md\n");
+    const { problems } = checkPlans({ root });
+    assert.equal(problems.length, 1);
+    assert.match(problems[0], /CLAUDE.md reloads "gone" but .*gone.*PLAN.md does not exist/);
+  });
+  it("does not require a reload line for a retired plan", () => {
+    writeFileSync(join(root, ".project-management", "plans", "alpha", "PLAN.md"), active.replace("status: active", "status: done"));
+    writeFileSync(join(root, "CLAUDE.md"), "# P\n");
+    assert.deepEqual(checkPlans({ root }).problems, []);
+    writeFileSync(join(root, ".project-management", "plans", "alpha", "PLAN.md"), active);
   });
 });

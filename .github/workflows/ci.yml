@@ -20,6 +20,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm test # both suites: the checker and the CLI
+      - run: node tools/check-plans.mjs # this repo's own plan passes the gate it ships
       - run: node bin/planrails.mjs check --dir examples/weekly-digest # the worked example passes the gate
       - run: node bin/planrails.mjs init --dir smoke-init # the CLI users run first, on every OS
       - run: node bin/planrails.mjs check --dir smoke-init

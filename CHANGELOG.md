@@ -1,5 +1,75 @@
 # Changelog
 
+## 0.4.0 — 2026-09-13
+
+A review of 0.3.0 against a real multi-session plan, the Claude Code docs, and
+the planning systems that came before it found where the promise leaked, and this
+release closes the leaks. Two of them are behaviour changes in the checker; the
+rest is method. Everything stays a prompt plus one script, and `init` still writes
+nothing but its two files.
+
+- **Evidence must record the proof's exit code, and it must be 0.** A command
+  proof's evidence cell now needs `exit 0` (or `exit code 0`, `exited 0`); a bare
+  word such as "done" or "✅", or a pasted `exit 1`, fails the build. This is the
+  format `PLANNER.md` always prescribed; the checker now checks it, and every
+  `exit N` in the cell counts. A proof cell must be exactly one backticked command
+  or the word `owner`, not prose with a span in it; an owner-closed task records
+  the owner's words with the date. **This is the one change that can fail a plan
+  that passed before** — and only a plan the method already called not done.
+  Re-run the proof and paste its exit code.
+- **The checker fails closed on a row it cannot read.** The cell splitter follows
+  the CommonMark rule for backtick runs, so a stray backtick or three backticks in
+  prose no longer shift the columns; a row whose cell count still differs from the
+  header's is a problem instead of a silent pass. A task table inside a code fence
+  is ignored, a table right after the task table with no heading between is no
+  longer read as tasks, and `**id**` in a header is read.
+- **Two integrity checks keep the reload honest.** When the project has a
+  `CLAUDE.md`, every active plan must be reloaded by
+  `@.project-management/plans/<id>/PLAN.md` on its own line, outside backticks and
+  fences, and no such line may point at a plan that does not exist. An active
+  plan's `RESUME` line must name a task that is still open, so a stale NOW is
+  caught. Both are skipped for a retired plan, so retiring a plan now means
+  setting `status: done` and then backticking its line; the reload check is
+  skipped when there is no `CLAUDE.md`.
+- **`--verify` has a timeout** (10 minutes per proof) and reports the last line a
+  failing proof printed, instead of hanging or saying nothing.
+- **The checker can no longer silently exit 0.** Its entry guard compared paths
+  textually, so run through a symlink, or through `/tmp` on macOS, it printed
+  nothing and passed. It now compares real paths, and a test runs it as a command,
+  and through a symlink, on a plan with a known problem. The same fix went into
+  the CLI, which npm installs as a symlink.
+- **The plan carries its own loop.** The PLAN.md template's HTML comments became a
+  "How to work this plan" block: set doing, run the proof now with the time from
+  `date`, paste `exit N`, done only on 0, update NOW, append a LOG entry, record a
+  learning, say where a blocked reason goes, run `git status --short` after a
+  compaction, and how to brief a sub-agent. A fresh session with only `CLAUDE.md`
+  and the plan completed a two-task plan by the loop and retired it correctly.
+- **The method (PLANNER.md) gained:** the project-root `CLAUDE.md` named as the
+  always-loaded file; "check the plan before the first task"; a task per sitting,
+  permanent task ids and `dropped` rows; phase-end end-to-end tasks; one active
+  plan per repo; a ~2,000-word budget that trims prose before Learnings; "delegate
+  a self-contained task" with a five-line brief, one writer per file, output to a
+  named file, and the main session running the proof; the engineering standards
+  (fix the cause, a red test starts an investigation, never weaken an assertion);
+  a fresh-context review at close; retiring a plan by backticking its line, never
+  by moving it under a "Finished" heading, which still imports; and the evidence
+  behind each rule. A test pins the template inside `PLANNER.md` to the checker,
+  so the two cannot drift apart.
+- **`init` updates the tool and never the plans.** Both copied files carry
+  `planrails X.Y.Z` near the top. A re-run replaces an older or unstamped copy
+  under `.project-management/planrails/` and says what it replaced, keeps a
+  same-version copy you edited unless `--force`, never writes into `plans/`, and
+  points out 0.2.x files left at the `.project-management/` root. `--root` and
+  `--dir` are accepted everywhere. The CLI runs correctly through npm's bin
+  symlink.
+- The `/plan` skill reads the project's own copy of `PLANNER.md` and says to run
+  `init` if it is missing, so there is one copy per project, not three. The README
+  says plainly that automatic reload is Claude Code's; other agents open the plan
+  by hand. The worked example carries the new block, and its log agrees with its
+  learnings. This repo's own plan for this release lives in
+  `.project-management/plans/self-sufficient-plan/` and is gated by the checker it
+  ships, in CI. 70 tests.
+
 ## 0.3.0 — 2026-09-12
 
 Two changes, both asked for by a user planning a long, multi-session feature:

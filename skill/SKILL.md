@@ -5,10 +5,10 @@ description: Plan a feature with the user, then execute it, so the work survives
 
 # Plan
 
-Follow the planner method in **`PLANNER.md`**. Read it and do exactly what it
-says. Do not summarise it from memory — open it. Find it in this skill's folder,
-or at `.project-management/planrails/PLANNER.md` in a project set up with `npx
-planrails init`.
+Follow the planner method in **`.project-management/planrails/PLANNER.md`**, the
+project's own copy. Read it and do exactly what it says; do not summarise it from
+memory — open it. If the file is missing, run `npx planrails init` first (it
+copies two files and writes nothing else), then open it.
 
 The short version, so you know where you are going:
 
@@ -19,14 +19,20 @@ The short version, so you know where you are going:
    commands), must-not-change, what it touches.
 3. **Write the plan** from the templates into `.project-management/plans/<id>/`.
    Name each task's proof before the work. Add
-   `@.project-management/plans/<id>/PLAN.md` to the always-loaded file so the plan
-   reloads after every compaction. If the project runs Node, copy in
-   `tools/check-plans.mjs` and wire it into the check command.
+   `@.project-management/plans/<id>/PLAN.md` to the root `CLAUDE.md` so the plan
+   reloads after every compaction. If the project runs Node, wire
+   `node .project-management/planrails/check-plans.mjs` into the check command.
+   Then check the plan before the first task: open every path it names, start
+   every proof.
 4. **Execute** one task at a time: do it, run the proof now, paste the exit code
-   and last line into the evidence cell, then mark it done and update NOW. When a
-   task fights back and you find the fix, record it in PLAN.md § Learnings so the
-   next session does not repeat the struggle.
-5. **Close** by re-running every proof and retiring the plan.
+   and last line into the evidence cell (exit 0, or it is not done), then mark it
+   done and update NOW. A self-contained task can go to a sub-agent briefed with
+   its row and the plan's Rules, Decisions, Learnings and Context; run the proof
+   yourself before pasting evidence. When a task fights back and you find the
+   fix, record it in PLAN.md § Learnings so the next session does not repeat the
+   struggle.
+5. **Close** by re-running every proof, a fresh-context review against Done when,
+   and retiring the plan: set `status: done`, then wrap its reload line in backticks.
 
 **Your judgement outranks the gate.** Never make a red gate pass; never trust a
 green one blind. A task is done only when its proof was run and pasted in.

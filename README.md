@@ -7,13 +7,17 @@ Long tasks lose their thread. A coding session compacts or ends, and the next on
 starts blind: it repeats work, or it trusts a status line that says "done" over
 work that is not. planrails fixes that with three plain rules and almost no code.
 
-1. **The plan reloads itself.** One line in the file your agent always reads
-   re-opens the plan after every compaction. The state is never lost.
+1. **The plan reloads itself.** One line in your project's root `CLAUDE.md`
+   re-opens the plan after every compaction, and the plan carries its own
+   operating loop, so a session that never saw the planner prompt still works it
+   correctly. (Claude Code reloads it for you; another agent opens it by hand.)
 2. **Every task names its proof before the work starts** — the command that will
    show it is done. No command, no way to fake it later.
-3. **A task is done only when its proof was run and pasted in.** An empty evidence
-   cell is not done, whatever the status says. A small, dependency-free checker
-   enforces this in your build.
+3. **A task is done only when its proof was run and its exit code pasted in.** An
+   empty evidence cell, a bare word, or a recorded `exit 1` is not done, whatever
+   the status says. A small, dependency-free checker enforces this in your build,
+   and also checks that every active plan has its reload line and that NOW points
+   at a task that is still open.
 
 It works in any project — Node, Python, Go, a monorepo, Windows — because it adds
 two files and changes nothing else.
@@ -30,8 +34,10 @@ npx planrails init
 
 That copies two files into `.project-management/planrails/` and makes the
 `plans/` folder. It writes **nothing else** — no `package.json`, no `npm install`,
-no hooks, no edits to your `CLAUDE.md`. Run it again any time; it skips files that
-already exist. What lands:
+no hooks, no edits to your `CLAUDE.md`. Run it again any time to update: it brings
+the two planner files up to the package version and tells you what it replaced,
+keeps a same-version copy you edited unless you pass `--force`, and never touches
+your plans. What lands:
 
 ```
 .project-management/
@@ -71,8 +77,8 @@ The command is the same; the difference is what your agent sees.
 - **Existing project:** the agent first reads your `CLAUDE.md`/`README`, your
   `docs/`, and recent commits, and reports what it found before planning — so the
   plan fits how your code already works. `init` is safe to run in a project that
-  already has files or its own `.project-management/`; it only adds, never
-  overwrites (without `--force`).
+  already has files or its own `.project-management/`: it only writes its two
+  planner files, updating an older copy, and never touches a plan.
 
 ### Without npm, or a non-Node project
 
@@ -88,17 +94,19 @@ planner method does not depend on any language.
 
 ### As a `/plan` command in Claude Code
 
-Copy [`skill/`](skill) to `~/.claude/skills/plan/`, and put a copy of `PLANNER.md`
-beside it in the same folder. Then `/plan` starts the same flow in any project.
+Copy [`skill/`](skill) to `~/.claude/skills/plan/`. Then `/plan` starts the same
+flow in any project that has run `npx planrails init` — the skill reads the
+project's own copy of `PLANNER.md`, so every project follows the version it has.
 
 ## How a plan works
 
 Each plan is two files: `PLAN.md` (the map and tracker) and `LOG.md` (append-only
-history). `PLAN.md` also carries the plan's memory — the rules to keep, the
-decisions made, and the **learnings** (a mistake, written as the rule that avoids
-it). Because the reload line brings `PLAN.md` back at the start of every session, a
-lesson from one chat is read by the next one before it repeats the struggle. The
-top of `PLAN.md` is what a fresh session reads first:
+history). `PLAN.md` carries a short "How to work this plan" block — the loop a
+session follows even if it never saw the planner prompt — and the plan's memory:
+the rules to keep, the decisions made, and the **learnings** (a mistake, written
+as the rule that avoids it). Because the reload line brings `PLAN.md` back at the
+start of every session, a lesson from one chat is read by the next one before it
+repeats the struggle. The top of `PLAN.md` is what a fresh session reads first:
 
 ```
 ## NOW
@@ -113,9 +121,11 @@ updated: 2026-09-12 14:20
 | T2 | render through the email seam       | doing | `npx vitest run tests/render.test.ts` | |
 ```
 
-The full method — how the agent gets ready, interviews you, writes the plan, and
-runs one task at a time — is in [`PLANNER.md`](PLANNER.md). A complete worked plan
-is in [`examples/weekly-digest/`](examples/weekly-digest).
+The full method — how the agent gets ready, interviews you, writes the plan,
+checks it before the first task, runs one task at a time, briefs a sub-agent with
+just a task's row and the plan's rules, and closes with a fresh-context review —
+is in [`PLANNER.md`](PLANNER.md). A complete worked plan is in
+[`examples/weekly-digest/`](examples/weekly-digest).
 
 ## The checker
 
@@ -126,13 +136,24 @@ npx planrails check                                         # the same, using th
 ```
 
 No dependencies. Node 20+, any OS (Windows included). The default is a fast
-structural check: every task that claims to be finished must name a proof and
-carry pasted evidence, and no spelling of "done" can slip past it.
+structural check, biased toward catching a faked "done":
 
-`--verify` goes further and **runs** each proof again. Because it executes the
-commands written in the plan, use it only on plans you trust — run the default
-structural check in CI that builds untrusted pull requests, and keep `--verify`
-for your own branch or a trusted pipeline.
+- every task that claims to be finished must name a proof — exactly one
+  `command` in backticks, or the word `owner` — and its evidence must record the
+  command's exit code, which must be 0; a bare word, an empty cell, or `exit 1`
+  fails. An owner-closed task records the owner's words with the date
+- no spelling of "done" slips past it, and a table row it cannot read (a stray
+  pipe or backtick) fails closed instead of passing
+- when the project has a `CLAUDE.md`, every active plan must be reloaded by
+  `@.project-management/plans/<id>/PLAN.md` on its own line, and no such line may
+  point at a plan that does not exist
+- an active plan's `RESUME` line must name a task that is still open
+
+`--verify` goes further and **runs** each proof again, with a timeout, and shows
+the last line a failing proof printed. Because it executes the commands written in
+the plan, use it only on plans you trust — run the default structural check in CI
+that builds untrusted pull requests, and keep `--verify` for your own branch or a
+trusted pipeline.
 
 ## On a team
 
@@ -140,7 +161,8 @@ for your own branch or a trusted pipeline.
   exits 0 when there are no plans, so a teammate who never uses planrails is
   unaffected.
 - **The reload line is a plain file include.** `@.project-management/plans/…` in
-  `CLAUDE.md` just tells Claude Code to load that file; it commits like any doc.
+  the root `CLAUDE.md` just tells Claude Code to load that file; it commits like
+  any doc. Other agents do not import it: open the plan by hand at session start.
 - **Decide whether to commit `.project-management/`.** Committing it shares plans
   and lets CI run the checker. If your repo gitignores it, the checker still runs
   locally and the plan still reloads for whoever has the files.
@@ -153,7 +175,9 @@ review found ten data-loss and silent-failure paths in that surface, and the
 monorepos and Windows. 0.2.0 keeps the idea and drops the weight: the same three
 rails, as a prompt plus one checker, with a two-command CLI that only copies
 files. 0.3.0 makes learnings a reloaded part of every plan and groups the two
-installed files under `.project-management/planrails/`. See
+installed files under `.project-management/planrails/`. 0.4.0 makes the plan
+carry its own loop, makes the checker demand `exit 0` and check the reload line,
+and teaches the executor to brief sub-agents from the plan. See
 [`CHANGELOG.md`](CHANGELOG.md).
 
 MIT.

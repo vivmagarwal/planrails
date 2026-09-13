@@ -12,7 +12,7 @@ a case the planner handles badly, or something you wish it did.
 ```bash
 git clone https://github.com/vivmagarwal/planrails && cd planrails
 npm test     # the checker's rules: a done task must name a proof and carry evidence
-npm run check   # the tests, plus the checker run against examples/weekly-digest
+npm run check   # the tests, plus the checker run on this repo's own plan and on examples/weekly-digest
 ```
 
 No dependencies. Node 20+, any OS.
@@ -26,11 +26,16 @@ No dependencies. Node 20+, any OS.
   add to them freely. If a change makes a plan easier to fake done, it will not be
   merged.
 - **`tools/check-plans.mjs` enforces one rule** — a done task needs a proof and
-  pasted evidence. Keep it to that. Every behaviour has a case in
-  `tools/check-plans.test.mjs`; add one for anything you change.
+  evidence that records `exit 0` — plus two integrity checks that keep the reload
+  honest: an active plan has its reload line, and NOW names an open task. Keep it
+  to that, and fail closed: a row the parser cannot read is a problem, never a
+  pass. Every behaviour has a case in `tools/check-plans.test.mjs`; add one for
+  anything you change.
 - **Keep it copy-simple.** The CLI (`bin/planrails.mjs`) only copies two files
-  into a project's `.project-management/planrails/` and runs the checker — no
-  `package.json` edits, no `npm install`, no hooks. Do not add a build step, a
-  config file, or a runtime dependency.
+  into a project's `.project-management/planrails/`, updates those two on a
+  re-run, never touches a plan, and runs the checker — no `package.json` edits,
+  no `npm install`, no hooks. Do not add a build step, a config file, or a
+  runtime dependency. Both copied files carry `planrails X.Y.Z` near the top; a
+  test pins it to `package.json`, so bump all three together.
   `PLANNER.md` must stay self-contained: an agent that has only that file must be
   able to do everything it says.

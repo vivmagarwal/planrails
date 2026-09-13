@@ -7,6 +7,16 @@ RESUME: T2 — render the digest through the email seam (lib/digest/render.ts)
 NEXT: T3 schedule the Monday send · T4 docs
 updated: 2026-09-12 14:20
 
+## How to work this plan
+Read NOW, then Rules and Learnings; do not re-read Context. One task at a time:
+1. Set it `doing`; point NOW at it.
+2. Do the work: fix causes, not symptoms; the simplest change that works end to end.
+3. Run the proof now. Paste `YYYY-MM-DD HH:MM · exit N · "last line"` into evidence, time from `date`.
+4. `done` only if N is 0. Point NOW at the next task; append an entry to LOG.md: did, files, proof, next, learned.
+5. If it fought back, add a Learning: the trap, then the rule. A verified fact goes in Context, a choice in Decisions.
+
+NOW is three lines for a stranger; on a long task note the sub-step, and update it before any turn ends. Blocked: say so in NOW, reason in the evidence cell. A task you will not do is `dropped`; its row stays. After a compaction, `git status --short` shows the in-flight work. Edit this file with the editor or a quoted heredoc; an unquoted shell string eats backticks. A self-contained task may go to a sub-agent briefed with its row, Rules, Decisions, Learnings and Context; it writes to a named file and reports a few lines, which are leads; you run the proof before pasting evidence. `node .project-management/planrails/check-plans.mjs` must pass. Full method: `.project-management/planrails/PLANNER.md` §4.
+
 ## Goal
 Every user gets one email each Monday with the five most-read posts of the past
 seven days. It sends through the existing email seam, so it lands in the same
