@@ -6,6 +6,16 @@ Check: `npm run check` (this repo's own plans through the checker, the worked ex
 
 Rules for changes are in `CONTRIBUTING.md`: no config file, no hook, no second script, no dependency; every checker change ships with a test that fails without it.
 
+## Learned the hard way
+
+- A gate reads absence as the risky case: no status line means active, a row it cannot read is a problem, a proof that is prose is no proof.
+- A gate's own entry point is tested as a spawned command, through a symlink too; a textual path comparison once made it silently exit 0.
+- Never write a run of backticks inside a table cell; say "code fence".
+
 ## Active plans
 
-@.project-management/plans/self-sufficient-plan/PLAN.md
+none
+
+## Finished plans
+
+`@.project-management/plans/self-sufficient-plan/PLAN.md` — 0.4.0, closed 2026-09-13

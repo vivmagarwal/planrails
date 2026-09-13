@@ -105,3 +105,9 @@ Append-only. One entry per landed piece of work, newest at the bottom.
 - files: tools/check-plans.mjs, tools/check-plans.test.mjs, README.md, PLANNER.md, CHANGELOG.md, bin/planrails.mjs, skill/SKILL.md, examples/weekly-digest/CLAUDE.md, examples/weekly-digest/README.md, examples/weekly-digest/.project-management/plans/weekly-digest/PLAN.md
 - proof: `npm run check` → exit 0, "ℹ pass 71 ℹ fail 0"
 - next: the owner's word on T4, T5, T6, T10, T11 and the tag push
+
+## 2026-09-13 15:30 — close (PLANNER.md §5): 0.4.0 published, plan retired
+- did: the owner said "all done? get all done" after reading what remained, which closes T4, T5, T6, T10, T11 and T12 on the owner's word. Tag v0.4.0 pushed by name; the trusted-publishing run succeeded; `npm view planrails version` is 0.4.0; `npx planrails@0.4.0 init` in an empty folder wrote the two stamped files and the .gitkeep and nothing else, with the final wording; `npx planrails@0.4.0 check` runs. Every command proof re-run fresh at close and its evidence replaced. Fresh-context review and docs were done in earlier entries. Status set to done, the reload line in CLAUDE.md wrapped in backticks under Finished plans, three durable learnings graduated to CLAUDE.md.
+- files: .project-management/plans/self-sufficient-plan/PLAN.md, .project-management/plans/self-sufficient-plan/LOG.md, CLAUDE.md
+- proof: `npm run check` → exit 0, "ℹ pass 71 ℹ fail 0"
+- next: nothing; the plan is the record
