@@ -11,13 +11,15 @@ Rules for changes are in `CONTRIBUTING.md`: no config file, no hook, no second s
 - A gate reads absence as the risky case: no status line means active, a row it cannot read is a problem, a proof that is prose is no proof.
 - A gate's own entry point is tested as a spawned command, through a symlink too; a textual path comparison once made it silently exit 0.
 - Never write a run of backticks inside a table cell; say "code fence".
+- A reloaded plan is in every session's context, not only its holder's; the plan's `session:` line plus the live listing (`claude agents --json`) says who holds it — matched by session id, because a session's name can change within the hour.
 
 ## Active plans
 
 Each plan below is held by one session — see its NOW `session:` line. Work one only when asked in this session, after the check in its block.
 
-@.project-management/plans/session-claim/PLAN.md
+none
 
 ## Finished plans
 
 `@.project-management/plans/self-sufficient-plan/PLAN.md` — 0.4.0, closed 2026-09-13
+`@.project-management/plans/session-claim/PLAN.md` — 0.5.0 and 0.5.1, closed 2026-09-13

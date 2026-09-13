@@ -70,3 +70,16 @@ Append-only. One entry per landed piece of work, newest at the bottom.
 - proof: owner — outcomes in the evidence cell; hashes in the scratchpad's t11-hashes.txt
 - next: T12
 - learned / decided: a harness that fails silently voids a field test → every setup step in a test harness asserts what it just did (the second run printed the commit it made and counted `session:` lines in the committed plan)
+
+## 2026-09-13 19:21 — correction to the T11 entry, and the written line verified
+- did: the 19:1x entry said B "claimed farewell as probe-b · efbd511f — its real id" and "took over as probe-b · 0d42b452 — its real id". At that moment those were B's own words: both probes had closed their plans and set the line to `none`, and neither LOG named the id, so disk could not confirm them. A second run of case (ii) with a watcher saving every distinct version of PLAN.md settles it: at 19:16:43 the line became `session: probe-b · 4991e782 · since 2026-09-13 19:16` — B's session id 4991e782-f790-…, the template's shape, a `date` stamp — stayed through both tasks (ten snapshots) and became `none` at close (19:19:18). The takeover of (iv) is verified by hashes and its LOG; the line it wrote mid-run was not captured and is not claimed.
+- files: none in this repo; ~/Work/temporary_tests/two-sessions branch case-ii-end2; the scratchpad's ii-snaps/
+- proof: owner — the owner's "please continue and get it all done" closes T11 with the facts above
+- next: T12 — tag v0.5.1 on that word, since 0.5.0 is the version users get today and it matches holders by name
+- learned / decided: a probe's reply is a lead; the file it wrote is the fact → capture what a session writes while it works (a watcher), not only how it leaves things (Learnings)
+
+## 2026-09-13 19:22 — close (PLANNER.md §5): 0.5.1 published, plan retired
+- did: CI for c9bc501 green on all nine jobs; tag v0.5.1 pushed by name on the owner's "please continue and get it all done"; the publish run succeeded; `npm view planrails version` is 0.5.1; `npx planrails@0.5.1 init` in an empty folder wrote the two stamped files and .gitkeep and nothing else. Every command proof re-run fresh at close. The fresh-context review ran on 0.5.0 (18:5x) and its findings were fixed and re-field-tested in 0.5.1; no second review. T8 and T9 dropped on the owner's word: nothing in edodo-video until the task in `edodo-video-9a` is 100% done. Status set to done, `session: none`, the reload line in CLAUDE.md wrapped in backticks, one learning graduated to CLAUDE.md.
+- files: .project-management/plans/session-claim/PLAN.md, .project-management/plans/session-claim/LOG.md, CLAUDE.md
+- proof: `npm run check` → exit 0, "ℹ pass 74 ℹ fail 0"
+- next: the edodo-video rollout, when the owner says its running task is done — from edodo-video: `npx planrails init` (brings the 0.5.1 files); in `.project-management/plans/composition-to-document/PLAN.md` add `session: <name> · <first 8 of the session id> · since <date>` under `updated:`, change "NOW is three lines" to four, replace the block's step 1 and append the template's last paragraph; under "Active plans" in CLAUDE.md add the held-by sentence; `bun pre-commit.ts`; commit by path. Then the real two-session check: a fresh session told "continue the plan" must stop, report and ask
