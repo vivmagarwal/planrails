@@ -214,6 +214,26 @@ describe("checkPlan — NOW is current (0.4.0)", () => {
   });
 });
 
+describe("the session line (0.5.0) is method, not gate", () => {
+  const plan = (now, rows) => `# P — plan\n\nstatus: active · opened 2026-09-13 · id: p\n\n## NOW\n${now}\n\n` + table(rows);
+  const T1done = "| T1 | x | done | `c` | 2026-09-13 · exit 0 · \"ok\" |";
+  const open = "| T2 | y | todo | `c` | |";
+  const claim = "session: edodo-video-9a · e999d3be · since 2026-09-13 16:38";
+  it("a claim in NOW, or session: none, changes nothing for the checker", () => {
+    const live = `RESUME: T2 — do y\nNEXT: —\nupdated: 2026-09-13 18:00\n${claim}`;
+    assert.deepEqual(checkPlan({ id: "p", text: plan(live, [T1done, open]) }), []);
+    assert.deepEqual(checkPlan({ id: "p", text: plan(live.replace(claim, "session: none"), [T1done, open]) }), []);
+    assert.deepEqual(checkPlan({ id: "p", text: plan(live.replace(`\n${claim}`, ""), [T1done, open]) }), [], "a plan written before 0.5.0 has no line");
+    assert.equal(isActive(plan(live, [T1done, open])), true);
+  });
+  it("the line masks nothing: a stale RESUME beside it is still reported", () => {
+    const stale = `RESUME: T1 — finish x\nNEXT: T2\nupdated: 2026-09-13 18:00\n${claim}`;
+    const p = checkPlan({ id: "p", text: plan(stale, [T1done, open]) });
+    assert.equal(p.length, 1);
+    assert.match(p[0], /NOW is stale — RESUME names T1, which is done/);
+  });
+});
+
 describe("reloadLines — rail 1 (0.4.0)", () => {
   it("reads @ lines on their own line, outside fences and backticks", () => {
     const ids = reloadLines("# P\n\n## Active plans\n@.project-management/plans/alpha/PLAN.md\n\n## Finished\n`@.project-management/plans/beta/PLAN.md`\n\n```\n@.project-management/plans/gamma/PLAN.md\n```\nsee @.project-management/plans/delta/PLAN.md inline\n");
@@ -255,7 +275,7 @@ describe("the PLAN.md template in PLANNER.md — case 11 (0.4.0): template and p
     assert.equal(isActive(template), true);
   });
   it("carries the block a fresh session works from", () => {
-    for (const must of ["## How to work this plan", "## NOW", "RESUME:", "exit N", "`date`", "LOG.md", "Learnings", "check-plans.mjs"]) assert.ok(template.includes(must), must);
+    for (const must of ["## How to work this plan", "## NOW", "RESUME:", "session:", "exit N", "`date`", "LOG.md", "Learnings", "check-plans.mjs", "claude agents", "git status --short"]) assert.ok(template.includes(must), must);
   });
 });
 

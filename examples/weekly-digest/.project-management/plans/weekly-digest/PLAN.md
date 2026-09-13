@@ -6,6 +6,7 @@ status: active · opened 2026-09-12 · id: weekly-digest
 RESUME: T2 — render the digest through the email seam (lib/digest/render.ts)
 NEXT: T3 schedule the Monday send · T4 docs
 updated: 2026-09-12 14:20
+session: app-3f · 7c1d2e9a · since 2026-09-12 14:05
 
 ## How to work this plan
 Read NOW, then Rules and Learnings; do not re-read Context. One task at a time:
@@ -15,7 +16,9 @@ Read NOW, then Rules and Learnings; do not re-read Context. One task at a time:
 4. `done` only if N is 0. Point NOW at the next task; append an entry to LOG.md: did, files, proof, next, learned.
 5. If it fought back, add a Learning: the trap, then the rule. A verified fact goes in Context, a choice in Decisions.
 
-NOW is three lines for a stranger; on a long task note the sub-step, and update it before any turn ends. Blocked: say so in NOW, reason in the evidence cell. A task you will not do is `dropped`; its row stays. After a compaction, `git status --short` shows the in-flight work. Edit this file with the editor or a quoted heredoc; an unquoted shell string eats backticks. A self-contained task may go to a sub-agent briefed with its row, Rules, Decisions, Learnings and Context; it writes to a named file and reports a few lines, which are leads; you run the proof before pasting evidence. If the project runs Node, `node .project-management/planrails/check-plans.mjs` must pass. Full method: `.project-management/planrails/PLANNER.md` §4.
+NOW is four lines for a stranger; on a long task note the sub-step, and update it before any turn ends. Blocked: say so in NOW, reason in the evidence cell. A task you will not do is `dropped`; its row stays. After a compaction, `git status --short` shows the in-flight work. Edit this file with the editor or a quoted heredoc; an unquoted shell string eats backticks. A self-contained task may go to a sub-agent briefed with its row, Rules, Decisions, Learnings and Context; it writes to a named file and reports a few lines, which are leads; you run the proof before pasting evidence. If the project runs Node, `node .project-management/planrails/check-plans.mjs` must pass. Full method: `.project-management/planrails/PLANNER.md` §4.
+
+The `session:` line names the one session working this plan. Before any task goes `doing`, even when asked to continue: re-read NOW from disk, run `claude agents --json` (in Claude Code, `ListAgents` names you) and `git status --short`. If the line names a live session that is not you, or says `none` while another session in this checkout is busy or plan files are dirty: stop, report what you found, and ask before writing to the plan, its files, or a commit. A named session the listing lacks is stale: say so, take over. Other reloaded plans are context; work only the one assigned in this session, and say which.
 
 ## Goal
 Every user gets one email each Monday with the five most-read posts of the past

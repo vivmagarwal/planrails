@@ -9,8 +9,10 @@ work that is not. planrails fixes that with three plain rules and almost no code
 
 1. **The plan reloads itself.** One line in your project's root `CLAUDE.md`
    re-opens the plan after every compaction, and the plan carries its own
-   operating loop, so a session that never saw the planner prompt still works it
-   correctly. (Claude Code reloads it for you; another agent opens it by hand.)
+   operating loop and the name of the session working it, so a session that
+   never saw the planner prompt still works it correctly — and a second session
+   in the same checkout checks for the first before it touches the plan. (Claude
+   Code reloads it for you; another agent opens it by hand.)
 2. **Every task names its proof before the work starts** — the command that will
    show it is done. No command, no way to fake it later.
 3. **A task is done only when its proof was run and its exit code pasted in.** An
@@ -120,9 +122,10 @@ status: active · opened 2026-09-12 · id: weekly-digest
 RESUME: T2 — render the digest through the email seam (lib/digest/render.ts)
 NEXT: T3 schedule the Monday send · T4 docs
 updated: 2026-09-12 14:20
+session: app-3f · 7c1d2e9a · since 2026-09-12 14:05
 
 ## How to work this plan
-(the loop a session follows: set doing, run the proof, paste exit N, done on 0, update NOW, log it)
+(the loop a session follows: set doing, run the proof, paste exit N, done on 0, update NOW, log it — and, before any doing, the check that no other live session holds the plan)
 
 ## Tasks
 | id | task | status | proof | evidence |
@@ -177,6 +180,27 @@ trusted pipeline.
 - **Decide whether to commit `.project-management/`.** Committing it shares plans
   and lets CI run the checker. If your repo gitignores it, the checker still runs
   locally and the plan still reloads for whoever has the files.
+- **Two machines, one plan.** The `session:` line names a session on the machine
+  that wrote it; another machine cannot list it. There, git is the record: pull
+  before you take a task, and read a `doing` row with a fresh `updated:` stamp as
+  someone's in-flight work.
+
+## Several sessions in one checkout
+
+The reload line puts an active plan into every Claude Code session opened in that
+directory, so a second session can read the plan and start the task the first one
+is on. A plan's NOW names the session working it
+(`session: app-3f · 7c1d2e9a · since 2026-09-12 14:05`), and the plan's block tells
+every session, before it sets a task `doing`, to re-read that line, list the live
+sessions (`claude agents --json`; `ListAgents` inside Claude Code) and run
+`git status --short`, and to stop and ask when another live session holds the plan
+— even when you asked it to continue, because you can forget which window owns
+it. One plan per session, one session per plan; the other reloaded plans are
+context. The claim is a lead, not a lock: a line left by a closed terminal blocks
+nobody, and the checker ignores the line. Field-tested with headless sessions: a
+second session told "Continue the active plan." stopped and asked while the first
+was live, took over when it was gone, and touched only the plan it was given when
+two were active.
 
 ## History
 
@@ -188,7 +212,8 @@ rails, as a prompt plus one checker, with a two-command CLI that only copies
 files. 0.3.0 makes learnings a reloaded part of every plan and groups the two
 installed files under `.project-management/planrails/`. 0.4.0 makes the plan
 carry its own loop, makes the checker demand `exit 0` and check the reload line,
-and teaches the executor to brief sub-agents from the plan. See
-[`CHANGELOG.md`](CHANGELOG.md).
+and teaches the executor to brief sub-agents from the plan. 0.5.0 names the
+session working a plan and has every session check for a live holder before it
+touches the plan. See [`CHANGELOG.md`](CHANGELOG.md).
 
 MIT.

@@ -1,4 +1,4 @@
-<!-- planrails 0.4.1 -->
+<!-- planrails 0.5.0 -->
 # The Planner
 
 You are about to plan a piece of work with a person, then help execute it so the
@@ -125,10 +125,26 @@ Pick a short kebab-case `<id>` (`weekly-digest`). Then:
   Put it on its own line, outside any code block — an `@` import wrapped in
   backticks does not load. Claude Code re-reads that file, and everything it
   imports, at every session start and after every compaction, so the plan comes
-  back on its own. One active plan per repo at a time; to pause another, set its
-  header to `status: paused` and wrap its line in backticks. (For a tool that
+  back on its own. Under the same heading, one line says how the plans are held:
+  *Each plan below is held by one session — see its NOW `session:` line. Work one
+  only when asked in this session, after the check in its block.* (For a tool that
   does not do `@`-imports, put the plan's path in `AGENTS.md` and open it by hand
   at the start of each session.)
+- **One plan per session, one session per plan.** A repo may hold several active
+  plans, each with its own reload line and each held by one session, named on its
+  NOW `session:` line. Every session reloads all of them, so keep them few; a plan
+  nobody is working is paused (`status: paused`, its line in backticks). A session
+  works only the plan the person in that session assigned; the other reloaded
+  plans are context, not work orders. Naming the session after the plan
+  (`claude -n <id>`) shows the holder in every listing and in the terminal title;
+  Claude Code gives a second live session with that name a variant suffix.
+- **Name the session.** NOW's `session:` line names the session that will execute
+  the plan: yours, if that is you. In Claude Code the name is what `ListAgents`
+  prints after "This session is", and the id is the first eight characters of
+  `$CLAUDE_CODE_SESSION_ID` — the `sessionId` that `claude agents --json` prints,
+  not the bracketed ref `ListAgents` shows. The id survives a resume when the name
+  may not. Elsewhere, write anything a reader can tell apart (`codex@mbp tty003`);
+  `none` when handing the plan to someone else.
 - **Wire the checker, if the project runs Node and has a check command.**
   `npx planrails init` already put it at `.project-management/planrails/check-plans.mjs`;
   if you did not run init, copy `tools/check-plans.mjs` from
@@ -154,9 +170,46 @@ for — read them and you skip the struggle instead of repeating it. After a
 compaction, also run `git status --short`: it is the journal of in-flight work
 that NOW may not mention yet.
 
+**Find out who holds the plan before you touch it.** The reload line puts every
+active plan into every session opened in this checkout; a plan in your context is
+not a work order. At session start, read NOW's `session:` line and say in one line
+which plan you are on, or none. Before any task goes `doing` — even when the
+person just asked you to continue; they can forget which window holds the plan —
+re-read that line from disk (your reloaded copy may be older than the file), list
+the live sessions, and run `git status --short`. `claude agents --json` lists every
+live session on the machine: `name`, `sessionId`, `cwd`, `pid`, `status` (`busy`,
+`idle`, or `waiting` for the person) and `startedAt`; `--cwd <dir>` keeps those
+started under a directory, and a headless `claude -p` run is listed too. In Claude
+Code, `ListAgents` names you and the peers, but its bracketed ref is not the
+session id; the id is `$CLAUDE_CODE_SESSION_ID`. An entry changes on status, not
+on edits: last activity is the plan's `updated:` stamp or its transcript's mtime
+under `~/.claude/projects/`. Then decide:
+
+- The line names you: go on.
+- It names a live session that is not you: stop. Busy is mid-task; idle is between
+  turns and still the holder; waiting means it needs the person — tell them.
+- It names a session the listing lacks: say so. No other live session in this
+  checkout: take over, write your claim. One is: stop; the id tells whether it is
+  that conversation resumed under a new name.
+- `none`, or no line (an older plan): a busy session in this checkout, or plan
+  files dirty in `git status`: stop. Otherwise say what you saw in one line, write
+  your claim, go on.
+- A worktree is another checkout with its own copy of the plan: a merge concern
+  later, not a clobber now. A sub-agent you briefed never runs this check; it
+  never writes the plan.
+
+Stopping means: report the session's name, status and start, what NOW says and
+what `git status` shows, then ask — `AskUserQuestion` in Claude Code; a `claude -p`
+run ends its turn with the question — whether to leave the plan to that session,
+take it over here once they have stopped it, or work something else. Write nothing
+to the plan, its files, or a commit until they answer. Stage commits by path;
+another session's in-flight edits are not yours to sweep up.
+
 The loop for each task:
 
-1. **Set it doing.** Change the status cell to `doing`. Update **NOW**.
+1. **Check who holds the plan** (above), then **set it doing.** Change the status
+   cell to `doing`. Update **NOW**, and put your session on its `session:` line
+   (`since` from `date` on a takeover; unchanged when it already names you).
 2. **Do the work.** Fix the cause, not the symptom. The simplest change that
    works, end to end.
 3. **Run the proof.** Right now, not from memory. Copy the exit code and the last
@@ -225,8 +278,8 @@ the task `blocked` with the reason, and stop. Do not hand-fix state to look done
    defects the self-tests had passed.
 3. **Update the docs** the work changed — in the same step, per the project's
    documentation guide if it has one.
-4. **Retire the plan.** Set its header to `status: done`, then wrap its reload
-   line in backticks, or delete it. Do not move a bare `@` line under a
+4. **Retire the plan.** Set its header to `status: done` and NOW's `session:` to
+   `none`, then wrap its reload line in backticks, or delete it. Do not move a bare `@` line under a
    "Finished" heading: it still imports, and every retired plan would reload
    forever. The status comes first: the checker holds an `active` plan to its
    reload line. The plan files stay on disk; they are the record.
@@ -261,12 +314,20 @@ Each line here was paid for by a real failure in earlier planning systems:
   repeated. The same struggle coming back in a new chat is the exact failure this
   fixes.
 - **History stays out of the plan.** One plan grew a 16,000-word progress section,
-  stamped two hours behind its own log. NOW is three lines; LOG.md is the history.
+  stamped two hours behind its own log. NOW is four lines; LOG.md is the history.
 - **Sub-agent findings are leads** because four spot-checked findings were each
   right in direction and wrong in number, and a wrong number becomes a wrong plan.
   Delegation is method, not machinery: a brief of one unit and nothing else worked.
 - **Repo-relative paths** because absolute paths break on the next machine, and a
   path a reader cannot open is worse than none.
+- **The `session:` line and the check before `doing`** exist because the reload
+  line loads a plan into every session opened in a checkout, not only the one
+  working it. On 2026-09-13 in edodo-video, a second session, opened for a
+  planrails upgrade, read the reloaded plan, was told "continue with T5",
+  committed, and was starting T5b while the first session was mid-edit on the
+  same files and the same PLAN.md; the owner interrupted. The person had asked,
+  so the check runs even then. The claim is a lead and the live listing decides,
+  so a stale line from a closed terminal blocks nobody.
 - **Nothing the method needs is installed.** `npx planrails init` only copies two
   files, and you can copy them by hand instead. The old version was a heavy
   package, and that is what broke on the projects that were not npm — Python,
@@ -295,6 +356,7 @@ status: active · opened <YYYY-MM-DD> · id: <kebab-id>
 RESUME: <T2 — the one thing to do next, with the file; written for a stranger>
 NEXT: <T3 · T4 · …>
 updated: <YYYY-MM-DD HH:MM, from `date`>
+session: <none, or the session working this plan: name · the first 8 characters of its session id · since YYYY-MM-DD HH:MM>
 
 ## How to work this plan
 Read NOW, then Rules and Learnings; do not re-read Context. One task at a time:
@@ -304,7 +366,9 @@ Read NOW, then Rules and Learnings; do not re-read Context. One task at a time:
 4. `done` only if N is 0. Point NOW at the next task; append an entry to LOG.md: did, files, proof, next, learned.
 5. If it fought back, add a Learning: the trap, then the rule. A verified fact goes in Context, a choice in Decisions.
 
-NOW is three lines for a stranger; on a long task note the sub-step, and update it before any turn ends. Blocked: say so in NOW, reason in the evidence cell. A task you will not do is `dropped`; its row stays. After a compaction, `git status --short` shows the in-flight work. Edit this file with the editor or a quoted heredoc; an unquoted shell string eats backticks. A self-contained task may go to a sub-agent briefed with its row, Rules, Decisions, Learnings and Context; it writes to a named file and reports a few lines, which are leads; you run the proof before pasting evidence. If the project runs Node, `node .project-management/planrails/check-plans.mjs` must pass. Full method: `.project-management/planrails/PLANNER.md` §4.
+NOW is four lines for a stranger; on a long task note the sub-step, and update it before any turn ends. Blocked: say so in NOW, reason in the evidence cell. A task you will not do is `dropped`; its row stays. After a compaction, `git status --short` shows the in-flight work. Edit this file with the editor or a quoted heredoc; an unquoted shell string eats backticks. A self-contained task may go to a sub-agent briefed with its row, Rules, Decisions, Learnings and Context; it writes to a named file and reports a few lines, which are leads; you run the proof before pasting evidence. If the project runs Node, `node .project-management/planrails/check-plans.mjs` must pass. Full method: `.project-management/planrails/PLANNER.md` §4.
+
+The `session:` line names the one session working this plan. Before any task goes `doing`, even when asked to continue: re-read NOW from disk, run `claude agents --json` (in Claude Code, `ListAgents` names you) and `git status --short`. If the line names a live session that is not you, or says `none` while another session in this checkout is busy or plan files are dirty: stop, report what you found, and ask before writing to the plan, its files, or a commit. A named session the listing lacks is stale: say so, take over. Other reloaded plans are context; work only the one assigned in this session, and say which.
 
 ## Goal
 <4–5 sentences: what we are building and why. What is true when it ships. A mermaid diagram only if the architecture is non-trivial.>

@@ -1,5 +1,49 @@
 # Changelog
 
+## 0.5.0 — 2026-09-13
+
+One method change, paid for by a real collision. The reload line loads an active
+plan into every session opened in a checkout, and on 2026-09-13 a second session
+in one repo read the reloaded plan, was told "continue", committed, and was
+starting the next task while the first session was mid-edit on the same files and
+the same PLAN.md. The checker is unchanged apart from its stamp; `init` still
+writes only its two files.
+
+- **A plan names the session working it.** NOW gains a fourth line,
+  `session: <name> · <first 8 characters of the session id> · since <date>`, or
+  `session: none` — written when the plan is written, when a task goes `doing`,
+  and on a takeover; cleared at close. It is a lead, not a lock: whether that
+  session is alive is decided by the live listing (`claude agents --json`, which
+  is documented and lists headless runs too; `ListAgents` inside Claude Code), so
+  a stale line from a closed terminal blocks nobody.
+- **The plan's block runs the check.** "How to work this plan" now tells a
+  session, before any task goes `doing` and even when the person asked it to
+  continue: re-read NOW from disk, list the live sessions, run
+  `git status --short`, and — if the line names a live session that is not you,
+  or says `none` while a peer in the checkout is busy or plan files are dirty —
+  stop, report and ask before writing to the plan, its files, or a commit.
+  Several reloaded plans: work only the one assigned in this session, and say
+  which.
+- **One plan per session, one session per plan** replaces "one active plan per
+  repo". Several plans may be active, each with its own reload line and one
+  holder; keep them few, since every session reloads all of them. The "Active
+  plans" heading in `CLAUDE.md` carries one line saying so.
+- **PLANNER.md** §3 has the rule and "name the session"; §4 the check, the listing
+  and the decision rules (busy, idle, waiting, stale, a plan with no line, a
+  worktree, a sub-agent), and how to stop and ask; §5 clears the line at close;
+  "Why it is shaped this way" records the incident.
+- **Existing plans: update by hand.** `init` never touches a plan. Add the
+  `session:` line to NOW, change "NOW is three lines" to four, and append the
+  block's last paragraph from the template. A plan without them still passes the
+  checker, which ignores the line; a test pins that.
+- Field-tested with headless sessions in a scratch project: told only "Continue
+  the active plan.", a second session stopped, reported and asked while the
+  holder was live (idle with a clean tree; busy with a dirty PLAN.md and no
+  line), and wrote nothing; took over a stale claim and finished the plan by the
+  loop; and, told to continue the second of two plans, wrote its claim on that
+  one and left the held plan byte-identical. One wording gap found and fixed: the
+  id is the session id, not the ref `ListAgents` prints. 73 tests.
+
 ## 0.4.1 — 2026-09-13
 
 - The Claude Code skill is `/planrails`, not `/plan`, because Claude Code has a
