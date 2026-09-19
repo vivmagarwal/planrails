@@ -1,12 +1,12 @@
 # Checker notes — plan
 
-status: active · opened 2026-09-19 · id: checker-notes
+status: done · opened 2026-09-19 · closed 2026-09-19 · id: checker-notes
 
 ## NOW
-RESUME: T5 — blocked on the owner: commit, tag v0.6.0, publish. T1–T4 are done, the fresh-context review is done and its three findings fixed (LOG.md), every proof re-run green. Nothing is committed yet; `git status --short` lists the work
-NEXT: after T5, close by PLANNER.md §5: `status: done`, `session: none`, the reload line in backticks
-updated: 2026-09-19 11:00
-session: planrails-db · afd849cf · since 2026-09-19 10:57
+RESUME: nothing; plan closed 2026-09-19. 0.6.0 is published (commit 2260300, tag v0.6.0); every command proof re-run green before the release; the published package smoke-tested from npm
+NEXT: none
+updated: 2026-09-19 11:32
+session: none
 
 ## How to work this plan
 Read NOW, then Rules and Learnings; do not re-read Context. One task at a time:
@@ -47,7 +47,7 @@ The checker gains a second kind of output: a **note**. A problem is a fact a scr
 | T2 | `planrails check` prints the same notes; a spawned-command test (bin/planrails.mjs, bin/planrails.test.mjs) | done | `node --test bin/planrails.test.mjs` | 2026-09-19 10:57 · exit 0 · "pass 15, fail 0"; after the review fixes, re-run by `--verify` 2026-09-19 11:00 · exit 0 |
 | T3 | docs and release prep: PLANNER.md's word line becomes ~3,000 and says the checker notes it; CONTRIBUTING.md gains the rule for notes; README's checker section; the checker's header comment; 0.6.0 in package.json, PLANNER.md, check-plans.mjs; CHANGELOG.md | done | `npm run check` | 2026-09-19 10:58 · exit 0 · "pass 84, fail 0"; after the review fixes 2026-09-19 11:00 · exit 0 · "pass 85, fail 0" |
 | T4 | field check on a real over-line plan: the note fires on edodo-video's active plan (3,588 words), exit 0, final line unchanged; this repo stays silent | done | `node tools/check-plans.mjs --root ../../edodo-video` | 2026-09-19 10:58 · exit 0 · "check-plans: 1 plan(s) ok — every completion claim has a proof and exit 0 evidence, active plans reload, NOW is current"; the line before it was the note, 3,588 words; this repo printed the ok line only |
-| T5 | commit, tag v0.6.0 and publish | blocked | owner | waits on the owner: a commit and a publish were not asked for in this session |
+| T5 | commit, tag v0.6.0 and publish | done | owner | 2026-09-19 owner: "commit and publish" — commit 2260300, tag v0.6.0 pushed by name, the publish workflow succeeded, `npx planrails@0.6.0 init` and `check` smoke-tested in a scratch project |
 
 ## Rules for this plan
 - A note needs a recorded failure behind it, the same bar as every line in the kit. This plan ships one note. A LOG-entry reminder was tested against four real plans and never fired; it is not built.
@@ -68,6 +68,7 @@ The checker gains a second kind of output: a **note**. A problem is a fact a scr
 ## Learnings
 - a proof piped through `tail` reports tail's exit code → run the proof unpiped, or to a file, and read `$?` straight after it (T1's first run)
 - a test that only straddles a boundary from far away does not pin it → assert at the line and one past it (the review moved `>` to `>=` and 84 tests still passed)
+- right after a publish, `npx planrails@X.Y.Z` fails with ETARGET from npm's cached metadata, and the registry itself lags a minute → poll `registry.npmjs.org/planrails/latest`, then smoke-test with `npm_config_prefer_online=true` (hit on 0.5.1 and again on 0.6.0)
 
 ## Context (read during planning — do not re-read)
 - tools/check-plans.mjs:299-341 — `checkPlans` and the CLI's three exits; bin/planrails.mjs:102-113 repeats the printing, so both change

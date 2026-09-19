@@ -35,3 +35,8 @@ Append-only. One entry per landed piece of work, newest at the bottom.
 - files: tools/check-plans.mjs, tools/check-plans.test.mjs, bin/planrails.test.mjs
 - proof: `npm run check` → exit 0, 85 pass; `node tools/check-plans.mjs --verify` → exit 0, every done proof re-run
 - next: T5, the owner: commit, tag v0.6.0, publish; then retire the plan
+
+## 2026-09-19 11:32 — T5: 0.6.0 published, plan closed
+- did: on the owner's word ("commit and publish"), committed by path (2260300), tagged v0.6.0, pushed main and the tag by name; the publish workflow succeeded. Smoke test in a scratch project: `npx planrails@0.6.0 init` exit 0, the copied checker is stamped 0.6.0, a 3,131-word active plan gets the note with exit 0, and `npx planrails check` prints the same bytes. The first two smoke runs failed with ETARGET: the registry took about a minute, then npm's local metadata cache was stale; `npm_config_prefer_online=true` fixed it. Plan retired: `status: done`, `session: none`, reload line in backticks.
+- learned: graduated two learnings to CLAUDE.md (a piped proof reports the pipe's exit code; the post-publish smoke test needs fresh registry metadata).
+- next: the owner's other projects pick the note up with `npx planrails@latest init` (edodo-video 3,588 words, karma_sakha 9,304).
