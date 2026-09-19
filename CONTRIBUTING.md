@@ -31,7 +31,11 @@ No dependencies. Node 20+, any OS.
   that names an open task. Keep it
   to that, and fail closed: a row the parser cannot read is a problem, never a
   pass. NOW's `session:` line is method: the checker ignores it (a test pins
-  that), because liveness is a runtime fact, not a commit-time one. Every
+  that), because liveness is a runtime fact, not a commit-time one. The checker
+  may also print a **note**: what a script can only suspect (an active plan over
+  ~3,000 words). A note never changes the exit code or the final line, says what
+  to do, and stays silent on a healthy plan. A new note needs a recorded failure
+  behind it; what a script can verify is a problem, not a note. Every
   behaviour has a case in `tools/check-plans.test.mjs`; add one for anything you
   change.
 - **Keep it copy-simple.** The CLI (`bin/planrails.mjs`) only copies two files

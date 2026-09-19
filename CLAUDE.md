@@ -18,7 +18,7 @@ Rules for changes are in `CONTRIBUTING.md`: no config file, no hook, no second s
 
 Each plan below is held by one session — see its NOW `session:` line. Work one only when asked in this session, after the check in its block.
 
-none
+@.project-management/plans/checker-notes/PLAN.md
 
 ## Finished plans
 

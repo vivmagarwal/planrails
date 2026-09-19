@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.6.0 — 2026-09-19
+
+The checker can now advise without blocking.
+
+- **Notes.** A problem is what a script can verify, and it still fails the build.
+  A note is what a script can only suspect: it prints as `check-plans: note: …`
+  on stdout before the final line, the exit code and the final line do not
+  change, and the agent that ran the check decides. `checkPlans` returns `notes`
+  beside `problems`; `npx planrails check` prints the same ones. On a plan with
+  no note the output is byte-for-byte what 0.5.2 printed.
+- **One note ships: an active `PLAN.md` over ~3,000 words.** The plan reloads
+  into every session, and nothing said when it had grown: four of four real plans
+  were past the stated line, one at 9,123 words. A retired plan gets no note; it
+  does not reload.
+- **The word line moves from ~2,000 to ~3,000.** The line was written before the
+  plan carried its own ~480-word block; two carefully kept plans measure ~2,800.
+  The doc was stale, not the plans.
+- **Why not hooks.** The idea began as advisory Claude Code hooks. Checked against
+  the hooks reference: a PreCompact hook cannot add context, no event fires at a
+  context threshold, a Stop hook's advice forces another turn, and no event knows
+  a plan's task closed. The check command already runs before every commit and
+  its output is already read, in any agent. `CONTRIBUTING.md` sets the bar for a
+  new note: a recorded failure behind it, silent on a healthy plan. A LOG-entry
+  reminder was tested on four real plans, never fired, and was not built.
+
+To update: `npx planrails@latest init`. No plan needs editing.
+
 ## 0.5.2 — 2026-09-13
 
 A second field test of 0.5.1, four scratch projects and seven fresh sessions, and

@@ -6,7 +6,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { parseTasks, proofCommand, checkPlan, findPlans, checkPlans, reloadLines, isActive, runProof } from "./check-plans.mjs";
+import { parseTasks, proofCommand, checkPlan, findPlans, checkPlans, reloadLines, isActive, runProof, planNotes, WORD_LINE } from "./check-plans.mjs";
 
 const table = (rows, sep = "\n") =>
   `## Tasks${sep}${sep}| id | task | status | proof | evidence |${sep}|----|------|--------|-------|----------|${sep}${rows.join(sep)}${sep}`;
@@ -410,5 +410,59 @@ describe("checkPlans — the reload line, case 9 (0.4.0)", () => {
     writeFileSync(join(root, "CLAUDE.md"), "# P\n");
     assert.deepEqual(checkPlans({ root }).problems, []);
     writeFileSync(join(root, ".project-management", "plans", "alpha", "PLAN.md"), active);
+  });
+});
+
+describe("notes (0.6.0) — what a script can only suspect prints, and never fails the run", () => {
+  const CHECKER = fileURLToPath(new URL("./check-plans.mjs", import.meta.url));
+  const filler = (n) => `${"word ".repeat(n)}\n`;
+  const plan = (status, extra) => `# P\n\nstatus: ${status} · id: p\n\n## NOW\nRESUME: T1 — go\n\n${one("todo")}\n${filler(extra)}`;
+  it("an active plan over the word line gets one note that names the count and what to trim", () => {
+    const notes = planNotes({ id: "big", text: plan("active", WORD_LINE) });
+    assert.equal(notes.length, 1);
+    assert.match(notes[0], /^big: PLAN\.md is 3,0\d\d words, over the ~3,000 line/);
+    assert.match(notes[0], /move history to LOG\.md/);
+  });
+  it("a plan under the line, and a plan that is not active, get none", () => {
+    assert.deepEqual(planNotes({ id: "small", text: plan("active", 100) }), []);
+    assert.deepEqual(planNotes({ id: "old", text: plan("done", WORD_LINE) }), []);
+  });
+  it("the line is exact: 3,000 words is quiet, 3,001 is noted", () => {
+    assert.deepEqual(planNotes({ id: "at", text: "word ".repeat(WORD_LINE) }), []);
+    assert.match(planNotes({ id: "past", text: "word ".repeat(WORD_LINE + 1) })[0], /is 3,001 words/);
+  });
+  it("a plan with no status line counts as active here too", () => {
+    assert.equal(planNotes({ id: "x", text: filler(WORD_LINE + 1) }).length, 1);
+  });
+  describe("as a command", () => {
+    let root;
+    const write = (id, text) => { mkdirSync(join(root, ".project-management", "plans", id), { recursive: true }); writeFileSync(join(root, ".project-management", "plans", id, "PLAN.md"), text); };
+    before(() => { root = mkdtempSync(join(tmpdir(), "planrails-notes-")); write("big", plan("active", WORD_LINE)); });
+    after(() => { rmSync(root, { recursive: true, force: true }); });
+    it("a note keeps exit 0 and leaves the ok line last", () => {
+      const r = spawnSync(process.execPath, [CHECKER, "--root", root], { encoding: "utf8" });
+      assert.equal(r.status, 0);
+      const lines = r.stdout.trim().split(/\r?\n/);
+      assert.match(lines[0], /^check-plans: note: big: PLAN\.md is/);
+      assert.match(lines.at(-1), /^check-plans: 1 plan\(s\) ok/);
+      assert.equal(r.stderr, "");
+    });
+    it("a failing run still exits 1, and prints the note too", () => {
+      write("bad", one("done", "`c`", ""));
+      const r = spawnSync(process.execPath, [CHECKER, "--root", root], { encoding: "utf8" });
+      assert.equal(r.status, 1);
+      assert.match(r.stdout, /note: big:/);
+      assert.match(r.stderr, /1 problem\(s\)/);
+    });
+  });
+  it("with no note, a passing run prints exactly the one ok line", () => {
+    const root = mkdtempSync(join(tmpdir(), "planrails-quiet-"));
+    try {
+      mkdirSync(join(root, ".project-management", "plans", "p"), { recursive: true });
+      writeFileSync(join(root, ".project-management", "plans", "p", "PLAN.md"), plan("active", 10));
+      const r = spawnSync(process.execPath, [CHECKER, "--root", root], { encoding: "utf8" });
+      assert.equal(r.status, 0);
+      assert.equal(r.stdout, "check-plans: 1 plan(s) ok — every completion claim has a proof and exit 0 evidence, active plans reload, NOW is current\n");
+    } finally { rmSync(root, { recursive: true, force: true }); }
   });
 });

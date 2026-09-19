@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// planrails 0.5.2
+// planrails 0.6.0
 /**
  * check-plans — the machine-checked rails of the planner.
  *
@@ -14,6 +14,10 @@
  *  - NOW must be current: an active plan with a NOW section keeps its RESUME
  *    line, and that line may not name only finished tasks. A retired plan says `status: done` (or paused) and is exempt
  *    from both; a plan with no status line counts as active.
+ *
+ * It also prints notes: what a script can only suspect (an active PLAN.md over
+ * ~3,000 words, which reloads into every session). A note goes to stdout before
+ * the final line and never changes the exit code; whoever ran the check decides.
  *
  * The rule is biased toward catching a faked "done": a task counts as a
  * completion claim UNLESS its status is blank or an explicit not-done word
@@ -295,9 +299,27 @@ export function runProof(cmd, root, timeoutMs) {
   return { code: r.status ?? 1, last };
 }
 
-/** Check every plan under root. Returns { plans, problems }. `--verify` re-runs proofs, each with a timeout (10 min by default). */
+/**
+ * Notes on one plan: what a script can only suspect. A note prints and the run
+ * still exits 0; whoever ran the check decides. Only an active plan gets one —
+ * a retired plan does not reload, so its size costs nothing.
+ */
+export const WORD_LINE = 3000;
+const commas = (n) => String(n).replace(/\B(?=(\d{3})+$)/g, ","); // no Intl: a Node built without it would drop the comma
+export function planNotes({ id, text }) {
+  const notes = [];
+  if (!isActive(text)) return notes;
+  const words = text.split(/\s+/).filter(Boolean).length;
+  if (words > WORD_LINE) notes.push(`${id}: PLAN.md is ${commas(words)} words, over the ~${commas(WORD_LINE)} line — it reloads into every session; move history to LOG.md and trim prose before Learnings or Decisions`);
+  return notes;
+}
+/** The notes as printed: one "note:" line each, newline-terminated, or "" when there are none. */
+export const formatNotes = (notes) => notes.map((n) => `check-plans: note: ${n}\n`).join("");
+
+/** Check every plan under root. Returns { plans, problems, notes }. `--verify` re-runs proofs, each with a timeout (10 min by default). */
 export function checkPlans({ root = ".", verify = false, verifyTimeoutMs = 10 * 60 * 1000 } = {}) {
   const { plans, problems } = findPlans(root);
+  const notes = [];
   const run = verify ? (cmd) => runProof(cmd, root, verifyTimeoutMs) : null;
   const claudeMd = join(root, "CLAUDE.md");
   const reloads = existsSync(claudeMd) ? reloadLines(readFileSync(claudeMd, "utf8")) : null;
@@ -305,11 +327,12 @@ export function checkPlans({ root = ".", verify = false, verifyTimeoutMs = 10 * 
     let text = "";
     try { text = readFileSync(path, "utf8"); } catch (e) { problems.push(`${id}: cannot read ${path} (${e.code || e.message})`); continue; }
     problems.push(...checkPlan({ id, text, verify, run }));
+    notes.push(...planNotes({ id, text }));
     if (reloads && isActive(text) && !reloads.has(id))
       problems.push(`${id}: the plan is active but CLAUDE.md has no reload line — add "@.project-management/plans/${id}/PLAN.md" on its own line, outside backticks, or the plan will not survive a compaction`);
   }
   if (reloads) for (const id of reloads) if (!plans.some((p) => p.id === id)) problems.push(`CLAUDE.md reloads "${id}" but .project-management/plans/${id}/PLAN.md does not exist`);
-  return { plans, problems };
+  return { plans, problems, notes };
 }
 
 // --- CLI ----------------------------------------------------------------------
@@ -330,7 +353,8 @@ if (isMain) {
   const verify = args.includes("--verify");
   const root = flagValue(args, "--root") || flagValue(args, "--dir") || ".";
   if (!existsSync(root)) { process.stderr.write(`check-plans: --root path does not exist: ${root}\n`); process.exit(2); }
-  const { plans, problems } = checkPlans({ root, verify });
+  const { plans, problems, notes } = checkPlans({ root, verify });
+  process.stdout.write(formatNotes(notes));
   if (!plans.length && !problems.length) { process.stdout.write("check-plans: no plans under .project-management/plans/ — nothing to check\n"); process.exit(0); }
   if (problems.length) {
     process.stderr.write(`check-plans: ${problems.length} problem(s):\n${problems.map((p) => `  - ${p}`).join("\n")}\n`);

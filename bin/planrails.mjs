@@ -18,7 +18,7 @@
 import { readFileSync, copyFileSync, mkdirSync, existsSync, writeFileSync, realpathSync, readdirSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { checkPlans, isActive } from "../tools/check-plans.mjs";
+import { checkPlans, isActive, formatNotes } from "../tools/check-plans.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const version = () => JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version;
@@ -103,7 +103,8 @@ function check(args) {
   const root = dirArg(args);
   if (!existsSync(root)) { console.error(`planrails check: --dir path does not exist: ${root}`); return 2; }
   const verify = args.includes("--verify");
-  const { plans, problems } = checkPlans({ root, verify });
+  const { plans, problems, notes } = checkPlans({ root, verify });
+  process.stdout.write(formatNotes(notes));
   if (!plans.length && !problems.length) { console.log("check-plans: no plans under .project-management/plans/ — nothing to check"); return 0; }
   if (problems.length) {
     console.error(`check-plans: ${problems.length} problem(s):\n${problems.map((p) => `  - ${p}`).join("\n")}`);

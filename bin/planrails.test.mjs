@@ -123,6 +123,20 @@ describe("planrails check", () => {
     assert.equal(bad.status, 1);
     assert.match(bad.stderr, /evidence cell is empty/);
   });
+  it("prints the checker's notes, keeps exit 0 and the ok line last (0.6.0)", () => {
+    const root = mkdtempSync(join(tmpdir(), "planrails-notes-cli-"));
+    try {
+      mkdirSync(join(root, ".project-management", "plans", "big"), { recursive: true });
+      writeFileSync(join(root, ".project-management", "plans", "big", "PLAN.md"), `status: active\n\n## NOW\nRESUME: T1\n\n## Tasks\n\n| id | task | status | proof | evidence |\n|--|--|--|--|--|\n| T1 | x | todo | \`npm test\` | |\n\n${"word ".repeat(3001)}\n`);
+      const r = run(["check", "--dir", root]);
+      assert.equal(r.status, 0, r.stderr);
+      const lines = r.stdout.trim().split(/\r?\n/);
+      assert.match(lines[0], /^check-plans: note: big: PLAN\.md is 3,0\d\d words/);
+      assert.match(lines.at(-1), /^check-plans: 1 plan\(s\) ok/);
+      const copied = spawnSync(process.execPath, [join(REPO, "tools", "check-plans.mjs"), "--root", root], { encoding: "utf8" });
+      assert.equal(r.stdout, copied.stdout, "the same stdout as the copied checker");
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  });
 });
 
 describe("planrails misc", () => {

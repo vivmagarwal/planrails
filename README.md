@@ -164,6 +164,18 @@ structural check, biased toward catching a faked "done":
 - an active plan keeps its `RESUME` line, and that line must name a task that
   is still open
 
+The checker also **advises without blocking**. What a script can only suspect, it
+prints as a `note:` before its final line; the run still exits 0, and the agent
+that ran the check decides. There is one today: an active `PLAN.md` over ~3,000
+words, because the plan reloads into every session and nothing else says when it
+has grown. Reminders ride on the check your agent already runs before every
+commit, so they need no hook.
+
+```
+check-plans: note: weekly-digest: PLAN.md is 3,588 words, over the ~3,000 line — it reloads into every session; move history to LOG.md and trim prose before Learnings or Decisions
+check-plans: 1 plan(s) ok — every completion claim has a proof and exit 0 evidence, active plans reload, NOW is current
+```
+
 `--verify` goes further and **runs** each proof again, with a timeout, and shows
 the last line a failing proof printed. Because it executes the commands written in
 the plan, use it only on plans you trust — run the default structural check in CI
@@ -220,6 +232,8 @@ installed files under `.project-management/planrails/`. 0.4.0 makes the plan
 carry its own loop, makes the checker demand `exit 0` and check the reload line,
 and teaches the executor to brief sub-agents from the plan. 0.5.0 names the
 session working a plan and has every session check for a live holder before it
-touches the plan. See [`CHANGELOG.md`](CHANGELOG.md).
+touches the plan. 0.6.0 lets the checker advise without blocking: a `note:` for
+what a script can only suspect, starting with a plan that has outgrown its word
+line. See [`CHANGELOG.md`](CHANGELOG.md).
 
 MIT.

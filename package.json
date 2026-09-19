@@ -1,6 +1,6 @@
 {
   "name": "planrails",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "Plans that survive a lost session, and \"done\" that means done. A planner prompt and a tiny checker.",
   "type": "module",
   "license": "MIT",

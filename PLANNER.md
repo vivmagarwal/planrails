@@ -1,4 +1,4 @@
-<!-- planrails 0.5.2 -->
+<!-- planrails 0.6.0 -->
 # The Planner
 
 You are about to plan a piece of work with a person, then help execute it so the
@@ -116,8 +116,10 @@ Pick a short kebab-case `<id>` (`weekly-digest`). Then:
   checks, run end to end, the way a user would.
 - **Use repo-relative paths** (`lib/digest/query.ts`), never absolute ones. They
   are clickable and they survive a move to another machine.
-- **Keep PLAN.md under ~2,000 words.** Trim prose before Learnings or Decisions.
-  History goes in LOG.md, not here.
+- **Keep PLAN.md under ~3,000 words.** It reloads into every session, so every
+  word is paid for again and again. Trim prose before Learnings or Decisions.
+  History goes in LOG.md, not here. Past the line, the checker prints a `note:` —
+  advice, not a failure: the run still exits 0, and you decide what to trim.
 - **Add the reload line.** In the project-root `CLAUDE.md`, under a short
   "Active plans" spot, add:
   ```
@@ -332,6 +334,12 @@ Each line here was paid for by a real failure in earlier planning systems:
   fixes.
 - **History stays out of the plan.** One plan grew a 16,000-word progress section,
   stamped two hours behind its own log. NOW is four lines; LOG.md is the history.
+- **The checker's notes advise; they never block.** A script can verify an exit
+  code, so that is a problem and fails the build. It can only suspect that a plan
+  is too long, so that is a note, and you judge. Four of four real plans had
+  outgrown the word line with nothing saying so. The check command already runs
+  before every commit and its output is already read, so a reminder there needs
+  no hook. A note needs a real failure behind it, or it is noise.
 - **Sub-agent findings are leads** because four spot-checked findings were each
   right in direction and wrong in number, and a wrong number becomes a wrong plan.
   Delegation is method, not machinery: a brief of one unit and nothing else worked.
